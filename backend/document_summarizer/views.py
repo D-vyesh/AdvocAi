@@ -489,6 +489,11 @@ from .improved_prompts import get_improved_system_messages
 LLM_AVAILABLE: bool = True
 LLM_LAST_ERROR: str = ""
 
+try:
+    from google.api_core.exceptions import NotFound as GoogleModelNotFound
+except Exception:
+    GoogleModelNotFound = None
+
 
 DEFAULT_REPLACEMENTS: Dict[str, str] = {
     'indemnity': (
@@ -912,7 +917,7 @@ def _generate_comprehensive_summary(full_text: str, doc_type: str, llm, doc_type
     try:
         from langchain_core.prompts import ChatPromptTemplate
         from pydantic import BaseModel, Field
-        from typing import Optional
+        from typing import Optional, Union, Dict, List, Any
         
         class PartyInfo(BaseModel):
             name: str = Field(..., description="Full legal name of the party")
@@ -940,7 +945,7 @@ def _generate_comprehensive_summary(full_text: str, doc_type: str, llm, doc_type
             execution_date: Optional[str] = Field(None, description="Date document was/will be signed")
             parties: List[PartyInfo] = Field(..., description="All parties involved with roles")
             purpose: str = Field(..., description="Core reason this document exists (2-3 sentences max)")
-            key_obligations: Dict[str, str] = Field(..., description="Map of party name to their main responsibilities")
+            key_obligations: List[str] = Field(default_factory=list, description="Key responsibilities and obligations of the parties")
             financial_terms: List[FinancialTerm] = Field(default_factory=list, description="Payment amounts, fees, compensation")
             term_and_termination: TerminationInfo = Field(..., description="Duration and how to end the agreement")
             compliance_requirements: Optional[List[str]] = Field(default_factory=list, description="Legal compliance obligations")
@@ -1033,7 +1038,8 @@ def _generate_comprehensive_summary(full_text: str, doc_type: str, llm, doc_type
         
         # Fallback to base model if primary fails
         fallback_models = [
-            "gemini-1.5-flash"  # Fallback option
+            "gemini-flash-latest",
+            "gemini-2.5-pro"
         ]
         
         logger.info(f"Using {model_for_summary} for comprehensive summary (optimized for quota efficiency)")
