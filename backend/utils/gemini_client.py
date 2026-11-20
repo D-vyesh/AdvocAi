@@ -10,4 +10,4 @@ def get_gemini_client():
     return genai
 
 def _get_llm_model_name():
-    return 'gemini-1.5-pro'
+    return os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash')
