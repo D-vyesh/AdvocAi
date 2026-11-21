@@ -8,6 +8,7 @@
     <img src="https://img.shields.io/badge/Django-5.2-green?logo=django" alt="Django" />
     <img src="https://img.shields.io/badge/AI-LangChain-orange" alt="LangChain" />
     <img src="https://img.shields.io/badge/DB-PostgreSQL%20%7C%20MongoDB-blue" alt="Database" />
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" />
   </p>
 </div>
 
@@ -136,4 +137,4 @@ AdvocAI_SE_Project/
 
 ## 📄 License
 
-*This project is unlicensed or under proprietary license. Please update accordingly.*
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
