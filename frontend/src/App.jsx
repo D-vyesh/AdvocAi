@@ -12,16 +12,11 @@ import ResetPassword from "./pages/ResetPassword"; // Import ResetPassword
 
 
 import AdminDashboard from "./pages/AdminDashboard";
-import LawyerProfile from "./pages/LawyerProfile";
-import LawyerDashboard from "./pages/LawyerDashboard";
 import DocumentAnalyzer from "./pages/DocumentAnalyzer";
-import LawyerConnect from "./pages/LawyerConnect";
 import MyDocuments from "./pages/MyDocuments";
 import DocumentCreation from "./pages/DocumentCreation";
-import DocumentVersions from "./pages/DocumentVersions"; // Added this import
+import DocumentVersions from "./pages/DocumentVersions";
 import SharedDocumentView from "./pages/SharedDocumentView";
-import ChatList from "./pages/ChatList";
-import Chat from "./pages/Chat";
 import ParticlesComponent from "./Components/Particles";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
@@ -82,34 +77,10 @@ function AppContent() {
             )}
           />
           <Route
-            path="/lawyer-connect"
-            element={(
-              <ProtectedRoute>
-                <LawyerConnect />
-              </ProtectedRoute>
-            )}
-          />
-          <Route
             path="/my-documents"
             element={(
               <ProtectedRoute>
                 <MyDocuments />
-              </ProtectedRoute>
-            )}
-          />
-          <Route
-            path="/lawyer-profile/:id"
-            element={(
-              <ProtectedRoute>
-                <LawyerProfile />
-              </ProtectedRoute>
-            )}
-          />
-          <Route
-            path="/lawyer-dashboard"
-            element={(
-              <ProtectedRoute>
-                <LawyerDashboard />
               </ProtectedRoute>
             )}
           />
@@ -142,22 +113,6 @@ function AppContent() {
             element={(
               <ProtectedRoute>
                 <SharedDocumentView />
-              </ProtectedRoute>
-            )}
-          />
-          <Route
-            path="/chat"
-            element={(
-              <ProtectedRoute>
-                <ChatList />
-              </ProtectedRoute>
-            )}
-          />
-          <Route
-            path="/chat/:conversationId"
-            element={(
-              <ProtectedRoute>
-                <Chat />
               </ProtectedRoute>
             )}
           />

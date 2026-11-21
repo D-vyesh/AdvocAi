@@ -27,18 +27,10 @@ export default function Navbar() {
     { to: "/", label: "Home" },
     { to: "/document-analyser", label: "Document Analyzer" },
     { to: "/document-creation", label: "Document Generator" },
-    { to: "/lawyer-connect", label: "Connect" },
     { to: "/my-documents", label: "My Documents", requiresAuth: true },
   ];
 
-  if (isAuthenticated) {
-    navLinks.push({ to: "/chat", label: "Messages", requiresAuth: true });
-  }
-
-  if (isAuthenticated && user?.role === 'lawyer') {
-    navLinks.push({ to: "/lawyer-dashboard", label: "Lawyer Dashboard", requiresAuth: true });
-  }
-   if (isAuthenticated && user?.role === 'admin') {
+  if (isAuthenticated && user?.role === 'admin') {
     navLinks.push({ to: "/admin-dashboard", label: "Admin Dashboard", requiresAuth: true });
   }
 

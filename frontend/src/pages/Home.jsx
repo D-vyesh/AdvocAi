@@ -104,7 +104,7 @@ export default function Home() {
                 </h1>
                 <p className="text-lg text-muted-foreground leading-relaxed max-w-lg">
                   Stop struggling with confusing contracts. Our AI instantly simplifies legal jargon, flags risks,
-                  generates custom legal documents, and connects you with expert lawyers when you need them.
+                  generates custom legal documents, and streamlines e-signatures and version management.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
                   {isAuthenticated ? (

@@ -9,9 +9,6 @@ import { Button } from "@/Components/ui/button";
 const AdminDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [lawyers, setLawyers] = useState([]);
-  const [lawyerStatusFilter, setLawyerStatusFilter] = useState("pending");
   const [promoteEmail, setPromoteEmail] = useState("");
   const [promoteRole, setPromoteRole] = useState("admin");
   const [newAdmin, setNewAdmin] = useState({ email: "", username: "", name: "", password: "" });
@@ -21,42 +18,8 @@ const AdminDashboard = () => {
     if (user.role !== "admin") {
       toast.error("This dashboard is only available to admin users.");
       navigate("/");
-      return;
     }
-
-    const loadLawyers = async () => {
-      try {
-        const response = await axios.get(
-          `api/auth/admin/lawyers/${lawyerStatusFilter ? `?status=${lawyerStatusFilter}` : ""}`
-        );
-        setLawyers(response.data || []);
-      } catch (err) {
-        console.error("Failed to load lawyers for admin:", err);
-        toast.error(err.response?.data?.error || "Unable to load lawyers.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadLawyers();
-  }, [user, navigate, lawyerStatusFilter]);
-
-  const handleVerifyLawyer = async (lawyerUserId, verification_status) => {
-    try {
-      const response = await axios.patch(`api/auth/admin/lawyers/${lawyerUserId}/verify/`, {
-        verification_status,
-      });
-      toast.success(response.data?.message || "Lawyer verification updated.");
-      // Refresh list
-      const refreshed = await axios.get(
-        `api/auth/admin/lawyers/${lawyerStatusFilter ? `?status=${lawyerStatusFilter}` : ""}`
-      );
-      setLawyers(refreshed.data || []);
-    } catch (err) {
-      console.error("Failed to verify lawyer:", err);
-      toast.error(err.response?.data?.error || "Unable to update lawyer status.");
-    }
-  };
+  }, [user, navigate]);
 
   const handlePromoteUser = async (e) => {
     e.preventDefault();
@@ -111,172 +74,99 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="container mx-auto py-10 animate-fade-in space-y-8">
+    <div className="container mx-auto py-10 animate-fade-in space-y-8 max-w-4xl">
       <Card className="bg-card border-border backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-2xl text-foreground">Admin Dashboard</CardTitle>
           <CardDescription className="text-muted-foreground">
-            Review and verify lawyers, and manage admin users.
+            Manage admin users and permissions.
           </CardDescription>
         </CardHeader>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="bg-card border-border lg:col-span-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="bg-card border-border">
           <CardHeader>
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <CardTitle className="text-foreground text-lg">Lawyer Verification</CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Approve or reject lawyers so they appear in Lawyer Connect.
-                </CardDescription>
-              </div>
-              <select
-                value={lawyerStatusFilter}
-                onChange={(e) => setLawyerStatusFilter(e.target.value)}
-                className="bg-background border border-border text-sm rounded-md px-3 py-1 text-foreground"
-              >
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-                <option value="">All</option>
-              </select>
-            </div>
+            <CardTitle className="text-foreground text-lg">Promote User</CardTitle>
+            <CardDescription className="text-muted-foreground">
+              Promote an existing user to admin or client role.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {loading && (
-              <div className="text-muted-foreground text-sm">Loading lawyers...</div>
-            )}
-            {!loading && lawyers.length === 0 && (
-              <div className="text-muted-foreground text-sm">
-                No lawyers found for this status.
-              </div>
-            )}
-            {lawyers.map((lawyer) => (
-              <div
-                key={lawyer.id}
-                className="border border-border rounded-lg p-4 bg-background/30 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+          <CardContent>
+            <form className="space-y-3" onSubmit={handlePromoteUser}>
+              <input
+                type="email"
+                value={promoteEmail}
+                onChange={(e) => setPromoteEmail(e.target.value)}
+                placeholder="User email"
+                className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
+              />
+              <select
+                value={promoteRole}
+                onChange={(e) => setPromoteRole(e.target.value)}
+                className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
               >
-                <div>
-                  <p className="text-foreground font-semibold">
-                    {lawyer.user?.name || lawyer.user?.username || "Lawyer"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {lawyer.user?.email}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Status: <span className="uppercase">{lawyer.verification_status}</span>
-                  </p>
-                  {lawyer.specializations && lawyer.specializations.length > 0 && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Specializations: {lawyer.specializations.join(", ")}
-                    </p>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                    onClick={() => handleVerifyLawyer(lawyer.user?.id, "approved")}
-                  >
-                    Approve
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleVerifyLawyer(lawyer.user?.id, "rejected")}
-                  >
-                    Reject
-                  </Button>
-                </div>
-              </div>
-            ))}
+                <option value="admin">Admin</option>
+                <option value="client">Client</option>
+              </select>
+              <Button type="submit" className="w-full">
+                Promote
+              </Button>
+            </form>
           </CardContent>
         </Card>
 
-        <div className="space-y-6">
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="text-foreground text-lg">Promote User</CardTitle>
-              <CardDescription className="text-muted-foreground">
-                Promote an existing user (including Google users) to admin or another role.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-3" onSubmit={handlePromoteUser}>
-                <input
-                  type="email"
-                  value={promoteEmail}
-                  onChange={(e) => setPromoteEmail(e.target.value)}
-                  placeholder="User email"
-                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
-                />
-                <select
-                  value={promoteRole}
-                  onChange={(e) => setPromoteRole(e.target.value)}
-                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
-                >
-                  <option value="admin">Admin</option>
-                  <option value="lawyer">Lawyer</option>
-                  <option value="client">Client</option>
-                </select>
-                <Button type="submit" className="w-full">
-                  Promote
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="text-foreground text-lg">Create Admin User</CardTitle>
-              <CardDescription className="text-muted-foreground">
-                Add a new admin who can log in with email and password.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-3" onSubmit={handleCreateAdmin}>
-                <input
-                  type="email"
-                  value={newAdmin.email}
-                  onChange={(e) =>
-                    setNewAdmin((prev) => ({ ...prev, email: e.target.value }))
-                  }
-                  placeholder="Email"
-                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
-                />
-                <input
-                  type="text"
-                  value={newAdmin.username}
-                  onChange={(e) =>
-                    setNewAdmin((prev) => ({ ...prev, username: e.target.value }))
-                  }
-                  placeholder="Username"
-                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
-                />
-                <input
-                  type="text"
-                  value={newAdmin.name}
-                  onChange={(e) =>
-                    setNewAdmin((prev) => ({ ...prev, name: e.target.value }))
-                  }
-                  placeholder="Full name (optional)"
-                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
-                />
-                <input
-                  type="password"
-                  value={newAdmin.password}
-                  onChange={(e) =>
-                    setNewAdmin((prev) => ({ ...prev, password: e.target.value }))
-                  }
-                  placeholder="Password"
-                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
-                />
-                <Button type="submit" className="w-full">
-                  Create Admin
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-foreground text-lg">Create Admin User</CardTitle>
+            <CardDescription className="text-muted-foreground">
+              Add a new administrator account.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="space-y-3" onSubmit={handleCreateAdmin}>
+              <input
+                type="email"
+                value={newAdmin.email}
+                onChange={(e) =>
+                  setNewAdmin((prev) => ({ ...prev, email: e.target.value }))
+                }
+                placeholder="Email"
+                className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
+              />
+              <input
+                type="text"
+                value={newAdmin.username}
+                onChange={(e) =>
+                  setNewAdmin((prev) => ({ ...prev, username: e.target.value }))
+                }
+                placeholder="Username"
+                className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
+              />
+              <input
+                type="text"
+                value={newAdmin.name}
+                onChange={(e) =>
+                  setNewAdmin((prev) => ({ ...prev, name: e.target.value }))
+                }
+                placeholder="Full name (optional)"
+                className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
+              />
+              <input
+                type="password"
+                value={newAdmin.password}
+                onChange={(e) =>
+                  setNewAdmin((prev) => ({ ...prev, password: e.target.value }))
+                }
+                placeholder="Password"
+                className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
+              />
+              <Button type="submit" className="w-full">
+                Create Admin
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
