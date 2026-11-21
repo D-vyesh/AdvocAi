@@ -677,8 +677,10 @@ def merge_llm_and_heuristic_risks(
             if is_duplicate(clause_text, existing_clause.get('clause_text', '')):
                 is_dup = True
                 # If heuristic has higher confidence, upgrade the existing one
-                if clause.get('confidence', 0) > existing_clause.get('confidence', 0):
-                    existing_clause['confidence'] = clause['confidence']
+                conf_new = clause.get('confidence') if clause.get('confidence') is not None else 0
+                conf_existing = existing_clause.get('confidence') if existing_clause.get('confidence') is not None else 0
+                if conf_new > conf_existing:
+                    existing_clause['confidence'] = clause.get('confidence')
                     existing_clause['category'] = clause.get('category', existing_clause.get('category'))
                 break
         
@@ -689,9 +691,9 @@ def merge_llm_and_heuristic_risks(
     # Final sort by priority
     merged.sort(
         key=lambda x: (
-            x.get('confidence', 0),
-            x.get('risk_score', 0),
-            x.get('weight', 0)
+            x.get('confidence') if x.get('confidence') is not None else 0,
+            x.get('risk_score') if x.get('risk_score') is not None else 0,
+            x.get('weight') if x.get('weight') is not None else 0
         ),
         reverse=True
     )

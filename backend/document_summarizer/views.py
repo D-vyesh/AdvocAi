@@ -15,7 +15,13 @@ from authentication.models import User
 import fitz  # PyMuPDF for PDF
 from docx import Document
 from mongoengine import DoesNotExist
-from utils.gemini_client import get_gemini_client, _get_llm_model_name # Import from centralized utility
+from utils.gemini_client import (
+    get_gemini_client,
+    _get_llm_model_name,
+    get_chat_llm,
+    get_groq_client,
+    get_groq_model_name
+) # Import from centralized utility
 
 
 # Import generalized false positive prevention framework
@@ -1029,154 +1035,38 @@ def _generate_comprehensive_summary(full_text: str, doc_type: str, llm, doc_type
             )
         ])
         
-        # Configure LLM with conservative settings to reduce None returns
         import time
-        from langchain_google_genai import ChatGoogleGenerativeAI
-        
-        # Use gemini-2.5-flash for comprehensive summary
-        model_for_summary = _get_llm_model_name()  # Consistent with main config
-        
-        # Fallback to base model if primary fails
-        fallback_models = [
-            "gemini-flash-latest",
-            "gemini-2.5-pro"
-        ]
-        
-        logger.info(f"Using {model_for_summary} for comprehensive summary (optimized for quota efficiency)")
-        
-        # Use a dedicated LLM instance with optimized settings for structured output
-        # CRITICAL: Do NOT use response_mime_type with with_structured_output() - they conflict!
-        summary_llm = ChatGoogleGenerativeAI(
-            model=model_for_summary,
-            temperature=0.2,  # Slightly higher for Flash (better quality)
-            max_output_tokens=2048,  # Standard limit for most models
-            google_api_key=settings.GEMINI_API_KEY,
-            max_retries=1,  # Reduced retries to avoid quota waste
-            request_timeout=60,  # Standard timeout
-            # DO NOT set response_mime_type - it conflicts with with_structured_output()
-            # DO NOT set candidate_count=1 - causes empty responses with structured output
-        )
-        
-        structured_summary_llm = summary_llm.with_structured_output(ComprehensiveSummary)
-        chain = summary_prompt | structured_summary_llm
-        
-        # Limit document text to avoid token limits (use first 6000 chars for more reliable processing)
-        truncated_text = full_text[:6000]  # Reduced from 8000 for better reliability
+        truncated_text = full_text[:6000]
         if len(full_text) > 6000:
-            # Add context about truncation
-            truncated_text += "\\n\\n[Document continues for " + str(len(full_text) - 6000) + " more characters...]\\n\\nNote: Analyze the provided excerpt and extract all available information."
-        
+            truncated_text += "\n\n[Document continues for " + str(len(full_text) - 6000) + " more characters...]\n\nNote: Analyze the provided excerpt and extract all available information."
+
         logger.info(f"Generating comprehensive {doc_type_name} summary using LLM (text length: {len(truncated_text)} chars)...")
-        
-        # Invoke with retry logic and model fallback
+
         result = None
-        max_attempts = 2  # Reduced to 2 since we have model fallback
+        max_attempts = 2
         last_error = None
-        
-        # Try primary model, then fallback models
-        models_to_try = [model_for_summary] + fallback_models
-        
-        for model_name in models_to_try:
-            logger.info(f"Trying model: {model_name}")
-            
-            # Create LLM instance for this model
+
+        summary_llm = get_chat_llm(temperature=0.2, max_output_tokens=2048)
+        structured_summary_llm = summary_llm.with_structured_output(ComprehensiveSummary)
+        current_chain = summary_prompt | structured_summary_llm
+
+        for attempt in range(max_attempts):
             try:
-                # Adjust parameters based on model type
-                is_pro = "pro" in model_name
-                is_exp = "exp" in model_name
-                
-                current_llm = ChatGoogleGenerativeAI(
-                    model=model_name,
-                    temperature=0.2,  # Consistent across models
-                    max_output_tokens=2048,  # Standard limit
-                    google_api_key=settings.GEMINI_API_KEY,
-                    max_retries=1,  # Single retry to save quota
-                    request_timeout=75 if is_pro else 60,  # Pro gets slightly more time
-                )
-                
-                current_structured_llm = current_llm.with_structured_output(ComprehensiveSummary)
-                current_chain = summary_prompt | current_structured_llm
-                
-            except Exception as model_init_error:
-                logger.warning(f"Failed to initialize {model_name}: {model_init_error}")
-                last_error = model_init_error
-                continue
-            for attempt in range(max_attempts):
-                try:
-                    logger.info(f"Model {model_name}, attempt {attempt + 1}/{max_attempts}...")
-                    
-                    result = current_chain.invoke(
-                        {'document_text': truncated_text},
-                        config={"max_retries": 0, "request_timeout": 60}  # No retries here, we handle it ourselves
-                    )
-                    
-                    # Check immediately if result is None
-                    if result is None:
-                        logger.warning(f"{model_name} returned None on attempt {attempt + 1}")
-                        if attempt < max_attempts - 1:
-                            wait_time = 2  # Fixed 2 second wait
-                            logger.info(f"Retrying in {wait_time} seconds...")
-                            time.sleep(wait_time)
-                            continue
-                        else:
-                            logger.warning(f"{model_name} returned None after {max_attempts} attempts, trying next model")
-                            last_error = ValueError(f"{model_name} returned None")
-                            break  # Try next model
-                    
-                    # Validate result has expected structure
-                    if not hasattr(result, 'model_dump') and not hasattr(result, 'dict') and not isinstance(result, dict):
-                        logger.warning(f"{model_name} returned unexpected type: {type(result)}")
-                        if attempt < max_attempts - 1:
-                            time.sleep(2)
-                            continue
-                        else:
-                            logger.warning(f"{model_name} returned wrong type after {max_attempts} attempts, trying next model")
-                            last_error = ValueError(f"Unexpected type: {type(result)}")
-                            break  # Try next model
-                    
-                    # Success - we got a valid result!
-                    logger.info(f"✅ {model_name} returned valid result on attempt {attempt + 1}")
-                    break  # Break attempt loop
-                    
-                except Exception as invoke_exc:
-                    error_msg = str(invoke_exc)
-                    logger.warning(f"{model_name} attempt {attempt + 1} failed: {error_msg}")
-                    last_error = invoke_exc
-                    
-                    # Check for quota/rate limit errors
-                    is_quota = any(indicator in error_msg.lower() for indicator in 
-                                  ['quota', 'rate limit', '429', 'resource exhausted', 'quota exceeded'])
-                    
-                    if is_quota:
-                        logger.warning(f"Quota/rate limit detected: {error_msg}")
-                        raise  # Don't retry on quota issues, trigger fallback immediately
-                    
-                    # For other errors, retry if attempts remain
-                    if attempt < max_attempts - 1:
-                        wait_time = 2
-                        logger.info(f"Retrying in {wait_time} seconds...")
-                        time.sleep(wait_time)
-                    else:
-                        logger.warning(f"{model_name} failed after {max_attempts} attempts, trying next model")
-                        break  # Try next model
-            
-            # Check if we got a valid result from this model
-            if result is not None:
-                logger.info(f"✅ Successfully got result from {model_name}")
-                break  # Break model loop - we're done!
-        
-        # After trying all models, check if we got a result
+                logger.info(f"Summary attempt {attempt + 1}/{max_attempts}...")
+                result = current_chain.invoke({'document_text': truncated_text})
+                if result is not None:
+                    logger.info(f"✅ LLM returned valid result on attempt {attempt + 1}")
+                    break
+            except Exception as invoke_exc:
+                error_msg = str(invoke_exc)
+                logger.warning(f"Summary attempt {attempt + 1} failed: {error_msg}")
+                last_error = invoke_exc
+                if attempt < max_attempts - 1:
+                    time.sleep(1)
+
         if result is None:
-            error_message = f"All models failed to generate output. Last error: {last_error}"
-            logger.error(error_message)
-            raise ValueError(error_message)
-        
-        logger.info(f"✅ LLM returned result type: {type(result)}")
-        
-        # Final validation that result is not None
-        if result is None:
-            logger.error("LLM returned None after all retry attempts - falling back to regex extraction")
-            raise ValueError("LLM returned None after retry logic - likely API quota or persistent connection issue")
+            logger.error(f"Failed to generate comprehensive summary: {last_error}")
+            raise ValueError(f"LLM returned None after {max_attempts} attempts - {last_error}")
         
         # Extract data from result with comprehensive error handling
         try:
@@ -1712,15 +1602,16 @@ def generate_document_analysis(text: str) -> Dict[str, Any]:
 
     global LLM_AVAILABLE, LLM_LAST_ERROR
 
-    if not settings.GEMINI_API_KEY or not LLM_AVAILABLE:
-        if not settings.GEMINI_API_KEY:
-            logger.warning("GEMINI_API_KEY not configured; falling back to heuristic analysis.")
+    has_api_key = bool(getattr(settings, 'GROQ_API_KEY', None) or getattr(settings, 'GEMINI_API_KEY', None))
+    if not has_api_key or not LLM_AVAILABLE:
+        if not has_api_key:
+            logger.warning("Neither GROQ_API_KEY nor GEMINI_API_KEY configured; falling back to heuristic analysis.")
         elif LLM_LAST_ERROR:
-            logger.warning("Gemini model disabled due to previous error: %s", LLM_LAST_ERROR)
+            logger.warning("AI model disabled due to previous error: %s", LLM_LAST_ERROR)
 
         analysis = _generate_mock_analysis(full_text, preview_excerpt, truncated_document)
         if LLM_LAST_ERROR:
-            note = "\n\nLLM Note: Gemini call disabled ({error}). Configure settings.GEMINI_MODEL with a supported model name or update API access.".format(
+            note = "\n\nLLM Note: AI call disabled ({error}).".format(
                 error=LLM_LAST_ERROR.split('\n')[0]
             )
             analysis['summary'] = (analysis.get('summary') or '') + note
@@ -1874,13 +1765,7 @@ def generate_document_analysis(text: str) -> Dict[str, Any]:
         ),
     ])
 
-    llm = ChatGoogleGenerativeAI(
-        model=_get_llm_model_name(),
-        temperature=0.15,
-        max_output_tokens=1200,
-        google_api_key=settings.GEMINI_API_KEY,
-        # DO NOT set response_mime_type - conflicts with with_structured_output()
-    )
+    llm = get_chat_llm(temperature=0.15, max_output_tokens=1200)
 
     structured_llm = llm.with_structured_output(DocumentAnalysis)
 
@@ -1898,15 +1783,16 @@ def generate_document_analysis(text: str) -> Dict[str, Any]:
 
     global LLM_AVAILABLE, LLM_LAST_ERROR
 
-    if not settings.GEMINI_API_KEY or not LLM_AVAILABLE:
-        if not settings.GEMINI_API_KEY:
-            logger.warning("GEMINI_API_KEY not configured; falling back to heuristic analysis.")
+    has_api_key = bool(getattr(settings, 'GROQ_API_KEY', None) or getattr(settings, 'GEMINI_API_KEY', None))
+    if not has_api_key or not LLM_AVAILABLE:
+        if not has_api_key:
+            logger.warning("Neither GROQ_API_KEY nor GEMINI_API_KEY configured; falling back to heuristic analysis.")
         elif LLM_LAST_ERROR:
-            logger.warning("Gemini model disabled due to previous error: %s", LLM_LAST_ERROR)
+            logger.warning("AI model disabled due to previous error: %s", LLM_LAST_ERROR)
 
         analysis = _generate_mock_analysis(full_text, preview_excerpt, truncated_document)
         if LLM_LAST_ERROR:
-            note = "\n\nLLM Note: Gemini call disabled ({error}). Configure settings.GEMINI_MODEL with a supported model name or update API access.".format(
+            note = "\n\nLLM Note: AI call disabled ({error}).".format(
                 error=LLM_LAST_ERROR.split('\n')[0]
             )
             analysis['summary'] = (analysis.get('summary') or '') + note
@@ -2060,13 +1946,7 @@ def generate_document_analysis(text: str) -> Dict[str, Any]:
         ),
     ])
 
-    llm = ChatGoogleGenerativeAI(
-        model=_get_llm_model_name(),
-        temperature=0.15,
-        max_output_tokens=1200,
-        google_api_key=settings.GEMINI_API_KEY,
-        # DO NOT set response_mime_type - conflicts with with_structured_output()
-    )
+    llm = get_chat_llm(temperature=0.15, max_output_tokens=1200)
 
     structured_llm = llm.with_structured_output(DocumentAnalysis)
 
@@ -2298,7 +2178,8 @@ def generate_document_analysis(text: str) -> Dict[str, Any]:
     comprehensive_summary = None
     
     # Configurable: Try LLM first if available, with automatic fallback to regex on quota issues
-    use_llm_for_summary = LLM_AVAILABLE and settings.GEMINI_API_KEY
+    has_summary_key = bool(getattr(settings, 'GROQ_API_KEY', None) or getattr(settings, 'GEMINI_API_KEY', None))
+    use_llm_for_summary = LLM_AVAILABLE and has_summary_key
     
     if use_llm_for_summary:
         logger.info("Attempting LLM-based comprehensive summary generation (will fallback to regex if quota exceeded)...")
@@ -2424,11 +2305,8 @@ def extract_text_from_file(uploaded_file):
         return None
 
 def chat_with_document(session, user_message):
-    """Use Gemini API to answer questions about the document."""
+    """Use Groq API (with Gemini fallback) to answer questions about the document."""
     try:
-        genai_client = get_gemini_client()
-        model = genai_client.GenerativeModel(_get_llm_model_name())
-        
         # Get chat history for context
         recent_messages = ChatMessage.objects(session=session).order_by('created_at')[:10]
 
@@ -2459,9 +2337,8 @@ def chat_with_document(session, user_message):
             preview_for_prompt = preview_for_prompt.replace('<br />', '\n').replace('<br/>', '\n')
         else:
             preview_for_prompt = session.document_text[:1500]
-        
-        messages = [
-            {"role": "user", "parts": [f"""You are a legal assistant helping a user understand a legal document.
+
+        system_prompt = f"""You are a legal assistant helping a user understand a legal document.
 Original Document (first 5000 characters):
 {session.document_text[:5000]}
 Document Summary:
@@ -2472,13 +2349,41 @@ Highlighted Preview (HIGH-RISK marks indicate clauses the analysis flagged):
 {preview_for_prompt}
 Please provide a helpful, accurate response based on the document content and summary.
 If the question cannot be answered from the document, politely state that.
-Keep your response clear and concise.
-"""]},
+Keep your response clear and concise."""
+
+        # 1. Try Groq first (Fast, high RPM, reliable)
+        groq_client = get_groq_client()
+        if groq_client:
+            try:
+                groq_messages = [{"role": "system", "content": system_prompt}]
+                for msg in recent_messages:
+                    role = 'user' if msg.is_user else 'assistant'
+                    groq_messages.append({"role": role, "content": msg.message})
+                groq_messages.append({"role": "user", "content": user_message})
+
+                resp = groq_client.chat.completions.create(
+                    model=get_groq_model_name(),
+                    messages=groq_messages,
+                    temperature=0.3,
+                    max_tokens=600
+                )
+                return resp.choices[0].message.content
+            except Exception as groq_exc:
+                logger.warning(f"Groq chat_with_document failed ({groq_exc}), falling back to Gemini...")
+
+        # 2. Fallback to Gemini if configured
+        genai_client = get_gemini_client()
+        if not genai_client:
+            raise ValueError("No AI provider available (Groq failed, Gemini not configured).")
+
+        model = genai_client.GenerativeModel(_get_llm_model_name())
+        messages = [
+            {"role": "user", "parts": [system_prompt]},
             {"role": "model", "parts": ["Okay, I am ready to help you with your document."]}
         ]
         
         for msg in recent_messages:
-            role = 'user' if msg.is_user else 'model' # Gemini uses 'model' for assistant
+            role = 'user' if msg.is_user else 'model'
             messages.append({"role": role, "parts": [msg.message]})
             
         messages.append({"role": "user", "parts": [user_message]})
@@ -2487,13 +2392,13 @@ Keep your response clear and concise.
             messages,
             generation_config=genai_client.types.GenerationConfig(
                 temperature=0.3,
-                max_output_tokens=500, # Limit response length
+                max_output_tokens=500,
             ),
-            request_options={'timeout': 60} # Increase timeout to 60 seconds
+            request_options={'timeout': 60}
         )
         return chat_completion.candidates[0].content.parts[0].text
     except Exception as e:
-        raise Exception(f"Error generating response with Gemini API: {str(e)}")
+        raise Exception(f"Error generating response with AI: {str(e)}")
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

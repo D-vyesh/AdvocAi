@@ -26,6 +26,8 @@ cloudinary
 PyPDF2
 reportlab
 openai
+groq
+langchain-groq
 channels
 daphne
 celery==5.4.0

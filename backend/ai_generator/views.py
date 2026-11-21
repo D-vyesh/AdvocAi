@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 import cloudinary.uploader
 
-from .utils import get_gemini_response # Import the new utility function
+from .utils import get_gemini_response, extract_document_data # Import the utility functions
 
 
 @api_view(['POST'])
@@ -37,18 +37,10 @@ def chat(request):
 
         print(f"Model response text: {response_text}")
 
-        # The response from the model is just text, so we need to parse it to see
-        # if it is a question or the final document.
-        # For now, we will assume that if the response contains "```json", it is the final document in JSON format.
-        # Otherwise, it is a question.
-        if '```json' in response_text:
-            # It's the final document
-            # Extract the JSON part from the response
-            json_str = response_text.split('```json')[1].split('```')[0]
-            document_data = json.loads(json_str)
+        is_document, document_data, _ = extract_document_data(response_text)
+        if is_document:
             return Response(document_data)
         else:
-            # It's a question
             return Response({'type': 'question', 'text': response_text})
 
     except Exception as e:

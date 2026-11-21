@@ -164,6 +164,9 @@ CELERY_TASK_SERIALIZER = 'json'
 # AI API Keys
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+GROQ_MODEL = os.environ.get('GROQ_MODEL', 'qwen/qwen3.8-27b')
+LLM_PROVIDER = os.environ.get('LLM_PROVIDER', 'groq')
 
 # AllAuth Configuration
 AUTHENTICATION_BACKENDS = [

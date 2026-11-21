@@ -10,7 +10,7 @@ from rest_framework.parsers import JSONParser
 from documents.mongo_client import get_all_conversations, get_conversation_by_id, save_conversation, update_conversation, delete_conversation, get_document_version_content, delete_document_version, update_share_permissions, update_user_share_permissions
 from channels.layers import get_channel_layer # Import get_channel_layer
 from asgiref.sync import async_to_sync # Import async_to_sync
-from ai_generator.utils import get_gemini_response # Import the AI generation function
+from ai_generator.utils import get_gemini_response, extract_document_data # Import the AI generation function
 
 
 from .comment_mongo_client import get_comments_for_document, add_comment, serialize_comment
@@ -32,14 +32,8 @@ def create_conversation_with_chat(request):
         # Generate AI response for the initial message
         ai_raw_response = get_gemini_response(message, initial_document_content)
         
-        # Parse the AI response to extract document content
-        ai_response_content = ""
-        if '```json' in ai_raw_response:
-            json_str = ai_raw_response.split('```json')[1].split('```')[0]
-            document_data = json.loads(json_str)
-            ai_response_content = document_data.get('text', '')
-        else:
-            ai_response_content = ai_raw_response # If not JSON, treat raw response as content
+        # Parse the AI response to extract document content safely
+        is_document, doc_data, ai_response_content = extract_document_data(ai_raw_response)
 
         # Determine a title for the new document (can be improved)
         title = message[:50] + "..." if len(message) > 50 else message
@@ -96,14 +90,8 @@ def send_chat_message(request, pk):
         # Generate AI response
         ai_raw_response = get_gemini_response(message, document_content)
 
-        # Parse the AI response to extract document content
-        ai_response_content = ""
-        if '```json' in ai_raw_response:
-            json_str = ai_raw_response.split('```json')[1].split('```')[0]
-            document_data = json.loads(json_str)
-            ai_response_content = document_data.get('text', '')
-        else:
-            ai_response_content = ai_raw_response # If not JSON, treat raw response as content
+        # Parse the AI response to extract document content safely
+        is_document, doc_data, ai_response_content = extract_document_data(ai_raw_response)
 
         # Update messages
         updated_messages = conversation.get('messages', [])
