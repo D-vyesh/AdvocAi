@@ -39,22 +39,42 @@ export default function Navbar() {
     { to: "/", label: "Home" },
     { to: "/document-analyser", label: "Analyzer" },
     { to: "/document-creation", label: "Generator" },
+    { to: "/lawyer-connect", label: "Lawyers", requiresAuth: true },
     { to: "/my-documents", label: "Documents", requiresAuth: true },
+    { to: "/chat", label: "Messages", requiresAuth: true },
   ];
+
+  if (isAuthenticated && user?.role === 'lawyer') {
+    navLinks.push({ to: "/lawyer-dashboard", label: "Lawyer Hub", requiresAuth: true });
+  }
 
   if (isAuthenticated && user?.role === 'admin') {
     navLinks.push({ to: "/admin-dashboard", label: "Admin", requiresAuth: true });
   }
 
+  const roleBadgeLabel =
+    user?.role === 'admin'
+      ? 'Admin'
+      : user?.role === 'lawyer'
+      ? 'Lawyer'
+      : 'Client';
+
+  const roleBadgeClasses =
+    user?.role === 'admin'
+      ? 'text-amber-200 border-amber-300/45 bg-amber-400/15'
+      : user?.role === 'lawyer'
+      ? 'text-emerald-200 border-emerald-300/45 bg-emerald-400/15'
+      : 'text-cyan-200 border-cyan-300/45 bg-cyan-400/15';
+
   return (
     <header className="sticky top-0 z-50 w-full px-4 sm:px-6 lg:px-8 pt-3.5 pb-2 pointer-events-none">
       {/* Floating Fluffy Liquid Glass Dock */}
-      <div className="max-w-6xl mx-auto glass-dock glass-reactive pointer-events-auto px-4 sm:px-6 py-2.5 transition-all duration-300">
-        <div className="relative z-10 flex items-center justify-between gap-3">
+      <div className="max-w-7xl mx-auto glass-dock glass-reactive pointer-events-auto px-4 sm:px-6 py-2.5 transition-all duration-300">
+        <div className="relative z-10 flex items-center justify-between gap-2.5">
           {/* Logo with Specular Dewdrop Brand Orb */}
           <Link
             to="/"
-            className="flex items-center gap-2.5 group focus:outline-none cursor-glass-target"
+            className="flex items-center gap-2.5 group focus:outline-none cursor-glass-target flex-shrink-0"
           >
             <div className="glass-circle w-10 h-10 p-1.5 shadow-[inset_0_2px_3px_rgba(255,255,255,0.92),0_6px_18px_rgba(0,212,255,0.38)] group-hover:scale-110 transition-transform duration-300 ease-fluffy">
               <Sparkles className="w-5 h-5 text-cyan-300 group-hover:rotate-12 transition-transform duration-300" />
@@ -65,15 +85,17 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Navigation - Plush Cushion Segmented Pills */}
-          <nav className="hidden md:flex items-center gap-1.5 p-1.5 rounded-full bg-white/[0.06] border border-white/15 backdrop-blur-xl shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]">
+          <nav className="hidden lg:flex items-center gap-1 p-1.5 rounded-full bg-white/[0.06] border border-white/15 backdrop-blur-xl shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]">
             {navLinks.map((link, index) => {
               if (link.requiresAuth && !isAuthenticated) return null;
-              const isActive = location.pathname === link.to;
+              const isActive =
+                location.pathname === link.to ||
+                (link.to !== "/" && location.pathname.startsWith(link.to));
               return (
                 <Link
                   key={index}
                   to={link.to}
-                  className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all duration-300 ease-fluffy ${
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all duration-300 ease-fluffy whitespace-nowrap ${
                     isActive
                       ? "bg-gradient-to-b from-white/30 to-cyan-400/15 text-white border border-white/45 shadow-[inset_0_2px_2px_rgba(255,255,255,0.85),0_6px_16px_rgba(0,212,255,0.28)] scale-[1.03]"
                       : "text-slate-300 hover:text-white hover:bg-white/12 hover:-translate-y-0.5"
@@ -86,7 +108,7 @@ export default function Navbar() {
           </nav>
 
           {/* Desktop Controls */}
-          <div className="hidden md:flex items-center gap-2.5">
+          <div className="hidden lg:flex items-center gap-2.5 flex-shrink-0">
             {/* Liquid Glass Cursor Lens Quick Toggle */}
             <Button
               type="button"
@@ -105,7 +127,11 @@ export default function Navbar() {
             </Button>
 
             {isAuthenticated ? (
-              <div className="flex items-center gap-2.5" ref={profileMenuRef}>
+              <div className="flex items-center gap-2" ref={profileMenuRef}>
+                <span className={`glass-pill px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider border ${roleBadgeClasses}`}>
+                  {roleBadgeLabel}
+                </span>
+
                 <Link
                   to="/profile"
                   className="glass-circle w-10 h-10 p-0.5 hover:scale-105 transition-transform"
@@ -147,8 +173,13 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center">
+          {/* Mobile / Tablet Menu Button */}
+          <div className="lg:hidden flex items-center gap-2">
+            {isAuthenticated && (
+              <span className={`glass-pill px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider border ${roleBadgeClasses}`}>
+                {roleBadgeLabel}
+              </span>
+            )}
             <Button
               type="button"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -165,11 +196,13 @@ export default function Navbar() {
 
       {/* Mobile Drawer (Ultra Frosted Fluffy Glass Panel) */}
       {isMenuOpen && (
-        <div className="md:hidden fixed inset-x-4 top-20 z-50 glass-panel glass-reactive p-6 shadow-2xl animate-fade-in pointer-events-auto border border-white/30">
+        <div className="lg:hidden fixed inset-x-4 top-20 z-50 glass-panel glass-reactive p-6 shadow-2xl animate-fade-in pointer-events-auto border border-white/30 max-h-[calc(100vh-6rem)] overflow-y-auto custom-scrollbar">
           <div className="relative z-10 flex flex-col space-y-2.5">
             {navLinks.map((link, index) => {
               if (link.requiresAuth && !isAuthenticated) return null;
-              const isActive = location.pathname === link.to;
+              const isActive =
+                location.pathname === link.to ||
+                (link.to !== "/" && location.pathname.startsWith(link.to));
               return (
                 <Link
                   key={index}

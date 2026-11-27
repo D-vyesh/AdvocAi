@@ -16,7 +16,6 @@ export const AuthProvider = ({ children }) => {
       const accessToken = localStorage.getItem('access_token');
       if (accessToken) {
         try {
-          // Validate token and fetch user profile
           const response = await axios.get('/api/auth/profile/', {
             headers: {
               Authorization: `Bearer ${accessToken}`
@@ -46,18 +45,16 @@ export const AuthProvider = ({ children }) => {
       let redirect;
 
       if (socialUserData && socialTokens) {
-        // For social logins (e.g., Google)
         tokens = socialTokens;
         userData = socialUserData;
-        redirect = 'home'; // Assuming social login always redirects to home
+        redirect = 'home';
       } else {
-        // For traditional email/password login
         const response = await axios.post('/api/auth/login/', { email, password });
         tokens = response.data.tokens;
         userData = response.data.user;
         redirect = response.data.redirect;
       }
-      
+
       const { access, refresh } = tokens;
 
       localStorage.setItem('access_token', access);
@@ -66,7 +63,13 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       toast.success('Login successful!');
 
-      if (redirect) {
+      if (userData?.role === 'lawyer' && userData?.lawyer_verification_status !== 'approved') {
+        navigate('/lawyer-dashboard');
+      } else if (userData?.role === 'lawyer') {
+        navigate('/lawyer-dashboard');
+      } else if (userData?.role === 'admin') {
+        navigate('/admin-dashboard');
+      } else if (redirect) {
         navigate(`/${redirect === 'home' ? '' : redirect}`);
       } else {
         navigate('/');
@@ -90,7 +93,6 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Logout failed:', error);
-      // Even if logout API fails, clear local storage
     } finally {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');

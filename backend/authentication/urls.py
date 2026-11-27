@@ -1,20 +1,28 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
-    signup_view, 
-    login_view, 
-    google_auth_view, 
+    signup_view,
+    login_view,
+    google_auth_view,
     logout_view,
     verify_otp_view,
     resend_otp_view,
-    profile_detail_update_view, 
+    profile_detail_update_view,
+    lawyer_list_view,
+    lawyer_detail_view,
+    connect_with_lawyer_view,
+    chat_conversations_list_view,
+    chat_messages_view,
     forgot_password_view,
     change_password_view,
     add_password_view,
     reset_password_view,
+    admin_lawyer_list_view,
+    admin_lawyer_verify_view,
     admin_promote_user_view,
-    admin_create_admin_user_view
+    admin_create_admin_user_view,
 )
+from utils.views import lawyer_dashboard_view, lawyer_connection_update_view
 
 urlpatterns = [
     path('signup/', signup_view, name='signup'),
@@ -27,8 +35,17 @@ urlpatterns = [
     path('forgot-password/', forgot_password_view, name='forgot_password'),
     path('reset-password/', reset_password_view, name='reset_password'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('lawyers/', lawyer_list_view, name='lawyer_list'),
+    path('lawyers/<str:lawyer_id>/', lawyer_detail_view, name='lawyer_detail'),
+    path('lawyers/<str:lawyer_id>/connect/', connect_with_lawyer_view, name='connect_lawyer'),
+    path('lawyer/dashboard/', lawyer_dashboard_view, name='lawyer_dashboard'),
+    path('lawyer/connections/<str:connection_id>/', lawyer_connection_update_view, name='lawyer_connection_update'),
+    path('chat/conversations/', chat_conversations_list_view, name='chat_conversations_list'),
+    path('chat/conversations/<str:conversation_id>/messages/', chat_messages_view, name='chat_messages'),
     path('change-password/', change_password_view, name='change_password'),
     path('add-password/', add_password_view, name='add_password'),
+    path('admin/lawyers/', admin_lawyer_list_view, name='admin_lawyer_list'),
+    path('admin/lawyers/<str:lawyer_id>/verify/', admin_lawyer_verify_view, name='admin_lawyer_verify'),
     path('admin/users/promote/', admin_promote_user_view, name='admin_promote_user'),
     path('admin/users/create-admin/', admin_create_admin_user_view, name='admin_create_admin_user'),
 ]

@@ -22,7 +22,7 @@ import { useAuth } from '../context/AuthContext'
 export default function Home() {
   const [selectedFeature, setSelectedFeature] = useState(null)
   const [activeDemo, setActiveDemo] = useState("analyzer")
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
 
   // Interactive state for the Smart Contract Intelligence Console
   const [activeContractIndex, setActiveContractIndex] = useState(0)
@@ -238,7 +238,7 @@ export default function Home() {
               </h1>
 
               <p className="text-base sm:text-lg text-slate-200/85 leading-relaxed max-w-xl font-normal">
-                Analyze contracts, detect hidden liabilities, compose customized agreements, and finalize legally binding digital signatures inside a weightless, liquid-glass workspace.
+                Analyze contracts, detect hidden liabilities, compose customized agreements, and connect with verified lawyers inside a weightless, liquid-glass workspace.
               </p>
 
               {/* Attractive Action Buttons */}
@@ -251,9 +251,23 @@ export default function Home() {
                       className="h-12 px-8 text-sm group"
                       asChild
                     >
-                      <Link to="/document-creation">
+                      <Link
+                        to={
+                          user?.role === "lawyer"
+                            ? "/lawyer-dashboard"
+                            : user?.role === "admin"
+                            ? "/admin-dashboard"
+                            : "/document-creation"
+                        }
+                      >
                         <Sparkles className="w-4 h-4 text-cyan-300" />
-                        <span>Open Document Studio</span>
+                        <span>
+                          {user?.role === "lawyer"
+                            ? "Open Lawyer Hub"
+                            : user?.role === "admin"
+                            ? "Open Admin Console"
+                            : "Open Document Studio"}
+                        </span>
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                       </Link>
                     </Button>
@@ -263,7 +277,9 @@ export default function Home() {
                       className="h-12 px-7 text-sm"
                       asChild
                     >
-                      <Link to="/document-analyser">Analyze Agreement</Link>
+                      <Link to={user?.role === "lawyer" ? "/chat" : "/lawyer-connect"}>
+                        {user?.role === "lawyer" ? "Client Messages" : "Connect with Lawyers"}
+                      </Link>
                     </Button>
                   </>
                 ) : (

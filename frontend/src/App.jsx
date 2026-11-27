@@ -11,6 +11,11 @@ import VerifyOtp from "./pages/VerifyOtp";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
+import LawyerDashboard from "./pages/LawyerDashboard";
+import LawyerConnect from "./pages/LawyerConnect";
+import LawyerProfile from "./pages/LawyerProfile";
+import ChatList from "./pages/ChatList";
+import Chat from "./pages/Chat";
 import DocumentAnalyzer from "./pages/DocumentAnalyzer";
 import MyDocuments from "./pages/MyDocuments";
 import DocumentCreation from "./pages/DocumentCreation";
@@ -81,6 +86,46 @@ function AppContent() {
             )}
           />
           <Route
+            path="/lawyer-connect"
+            element={(
+              <ProtectedRoute>
+                <LawyerConnect />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/lawyer-profile/:id"
+            element={(
+              <ProtectedRoute>
+                <LawyerProfile />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/lawyer-dashboard"
+            element={(
+              <ProtectedRoute allowedRoles={['lawyer']}>
+                <LawyerDashboard />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/chat"
+            element={(
+              <ProtectedRoute>
+                <ChatList />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/chat/:conversationId"
+            element={(
+              <ProtectedRoute>
+                <Chat />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
             path="/my-documents"
             element={(
               <ProtectedRoute>
@@ -91,7 +136,7 @@ function AppContent() {
           <Route
             path="/admin-dashboard"
             element={(
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin']}>
                 <AdminDashboard />
               </ProtectedRoute>
             )}

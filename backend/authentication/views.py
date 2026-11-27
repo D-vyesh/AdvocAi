@@ -966,6 +966,16 @@ def lawyer_detail_view(request, lawyer_id):
     if not profile:
         return Response({'error': 'Lawyer profile not found.'}, status=status.HTTP_404_NOT_FOUND)
 
+    is_owner_or_admin = (
+        getattr(request.user, 'is_authenticated', False)
+        and (
+            str(getattr(request.user, 'id', '')) == str(user.id)
+            or getattr(request.user, 'role', None) == 'admin'
+        )
+    )
+    if profile.verification_status != 'approved' and not is_owner_or_admin:
+        return Response({'error': 'Lawyer profile is not verified yet.'}, status=status.HTTP_403_FORBIDDEN)
+
     serializer = LawyerProfileSerializer(profile)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -986,8 +996,8 @@ def connect_with_lawyer_view(request, lawyer_id):
         return Response({'error': 'Lawyer not found.'}, status=status.HTTP_404_NOT_FOUND)
 
     profile = LawyerProfile.objects(user=lawyer).first()
-    if not profile:
-        return Response({'error': 'Lawyer is not available for connections yet.'}, status=status.HTTP_400_BAD_REQUEST)
+    if not profile or profile.verification_status != 'approved':
+        return Response({'error': 'Lawyer is not verified or available for connections yet.'}, status=status.HTTP_400_BAD_REQUEST)
 
     existing_request = LawyerConnectionRequest.objects(
         client=request.user, lawyer=lawyer, status='pending'
@@ -1138,8 +1148,28 @@ def admin_promote_user_view(request):
         return Response({"error": "User not found with this email."}, status=status.HTTP_404_NOT_FOUND)
 
     user.role = new_role
-    if new_role == "admin":
-        user.is_staff = True
+    user.is_staff = new_role == "admin"
+    if new_role == "lawyer":
+        user.is_lawyer_verified = True
+        user.lawyer_verification_status = "approved"
+        user.lawyer_verified_at = datetime.utcnow()
+        existing_profile = LawyerProfile.objects(user=user).first()
+        if not existing_profile:
+            LawyerProfile.objects.create(
+                user=user,
+                phone=user.phone or "",
+                license_number="ADMIN-APPROVED",
+                bar_council_id="ADMIN-APPROVED",
+                verification_status="approved",
+                verified_at=datetime.utcnow(),
+            )
+        elif existing_profile.verification_status != "approved":
+            existing_profile.verification_status = "approved"
+            existing_profile.verified_at = datetime.utcnow()
+            existing_profile.save()
+    elif new_role == "client":
+        user.is_lawyer_verified = False
+        user.lawyer_verification_status = "not_applicable"
     user.save()
 
     return Response(

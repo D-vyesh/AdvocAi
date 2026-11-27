@@ -592,85 +592,6 @@ class LawyerConnectionRequestSerializer(serializers.Serializer):
             'created_at': instance.created_at.isoformat() if instance.created_at else None,
             'updated_at': instance.updated_at.isoformat() if instance.updated_at else None,
         }
-        
-class ChatMessageSerializer(serializers.Serializer):
-    """Serializer for chat messages"""
-    id = serializers.CharField(read_only=True)
-    sender = serializers.SerializerMethodField()
-    message = serializers.CharField()
-    message_type = serializers.CharField()
-
-    def get_sender(self, obj):
-        from .models import User
-        try:
-            # Try to get sender from the object
-            if hasattr(obj, 'sender') and obj.sender:
-                sender = obj.sender
-                # If it's a reference, fetch it
-                if hasattr(sender, 'id'):
-                    return {
-                        'id': str(sender.id),
-                        'name': sender.name or sender.username or 'Unknown',
-                        'username': sender.username or 'unknown',
-                    }
-            # Fallback: try to get by ID if sender is stored as ID
-            if hasattr(obj, 'sender_id') and obj.sender_id:
-                sender = User.objects(id=obj.sender_id).first()
-                if sender:
-                    return {
-                        'id': str(sender.id),
-                        'name': sender.name or sender.username or 'Unknown',
-                        'username': sender.username or 'unknown',
-                    }
-        except Exception as e:
-            print(f"Error getting sender: {e}")
-        return {'id': 'unknown', 'name': 'Unknown', 'username': 'unknown'}
-
-class AdminLawyerVerificationSerializer(serializers.Serializer):
-    """Serializer for admin to approve/reject lawyer verification"""
-
-    verification_status = serializers.ChoiceField(choices=["approved", "rejected"])
-    verification_notes = serializers.CharField(required=False, allow_blank=True)
-
-
-class AdminPromoteUserSerializer(serializers.Serializer):
-    """Serializer for promoting an existing user to a new role (e.g., admin)"""
-
-    email = serializers.EmailField(required=True)
-    role = serializers.ChoiceField(
-        choices=[("client", "Client"), ("lawyer", "Lawyer"), ("admin", "Admin")],
-        default="admin",
-    )
-
-
-class AdminCreateAdminSerializer(serializers.Serializer):
-    """Serializer for creating a new admin user via admin dashboard"""
-
-    email = serializers.EmailField(required=True)
-    username = serializers.CharField(required=True, max_length=150)
-    name = serializers.CharField(required=False, allow_blank=True, max_length=255)
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-
-    def validate_email(self, value):
-        if User.objects(email=value).first():
-            raise serializers.ValidationError("A user with this email already exists.")
-        return value.lower().strip()
-
-    def validate_username(self, value):
-        if User.objects(username=value).first():
-            raise serializers.ValidationError("This username is already taken.")
-        return value.strip()
-
-    def create(self, validated_data):
-        user = User.create_user(
-            email=validated_data["email"],
-            username=validated_data["username"],
-            name=validated_data.get("name", ""),
-            password=validated_data["password"],
-            role="admin",
-            is_staff=True,
-        )
-        return user
 
 
 class AdminLawyerVerificationSerializer(serializers.Serializer):
@@ -718,4 +639,5 @@ class AdminCreateAdminSerializer(serializers.Serializer):
             is_staff=True,
         )
         return user
+
 
