@@ -1,49 +1,57 @@
 import * as React from "react"
-
 import { cn } from "@/lib/utils"
 
-const Card = React.forwardRef(({ className, ...props }, ref) => (
+const Card = React.forwardRef(({ className, interactive = false, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-200", className)}
-    {...props} />
+    className={cn(
+      "glass-panel glass-reactive text-card-foreground shadow-fluffy transition-all duration-300",
+      interactive && "glass-panel-interactive cursor-pointer",
+      className
+    )}
+    {...props}
+  />
 ))
 Card.displayName = "Card"
 
 const CardHeader = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col space-y-1.5 p-6", className)}
-    {...props} />
+    className={cn("relative z-10 flex flex-col space-y-1.5 p-6", className)}
+    {...props}
+  />
 ))
 CardHeader.displayName = "CardHeader"
 
 const CardTitle = React.forwardRef(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn("text-2xl font-semibold leading-none tracking-tight", className)}
-    {...props} />
+    className={cn("text-2xl font-bold tracking-tight text-white", className)}
+    {...props}
+  />
 ))
 CardTitle.displayName = "CardTitle"
 
 const CardDescription = React.forwardRef(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
-    {...props} />
+    className={cn("text-sm text-slate-300/85", className)}
+    {...props}
+  />
 ))
 CardDescription.displayName = "CardDescription"
 
 const CardContent = React.forwardRef(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+  <div ref={ref} className={cn("relative z-10 p-6 pt-0", className)} {...props} />
 ))
 CardContent.displayName = "CardContent"
 
 const CardFooter = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex items-center p-6 pt-0", className)}
-    {...props} />
+    className={cn("relative z-10 flex items-center p-6 pt-0", className)}
+    {...props}
+  />
 ))
 CardFooter.displayName = "CardFooter"
 

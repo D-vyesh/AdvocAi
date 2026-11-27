@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, X, UserPlus, Trash2, Check } from 'lucide-react';
+import { Copy, X, UserPlus, Trash2, Share2, Globe, Users } from 'lucide-react';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/Input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/Card';
-import { Label } from '@/Components/ui/Label';
 import { Switch } from '@/Components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/Components/ui/Select'; // Import Select components
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/Components/ui/Select';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';
 
@@ -18,7 +16,6 @@ const ShareModal = ({ documentId, documentTitle, onClose, initialSharedWithUsers
   const [sharedUsers, setSharedUsers] = useState(initialSharedWithUsers);
 
   useEffect(() => {
-    // Fetch current public share settings and shared users when modal opens
     const fetchShareSettings = async () => {
       if (!documentId) return;
       try {
@@ -72,7 +69,6 @@ const ShareModal = ({ documentId, documentTitle, onClose, initialSharedWithUsers
       });
       toast.success(`Document shared with ${usernameToShare}!`);
       setUsernameToShare('');
-      // Re-fetch shared users to update the list
       const response = await axios.get(`api/documents/conversations/${documentId}/`);
       setSharedUsers(response.data.shared_with_users || []);
     } catch (error) {
@@ -88,10 +84,9 @@ const ShareModal = ({ documentId, documentTitle, onClose, initialSharedWithUsers
     try {
       await axios.post(`api/documents/conversations/${documentId}/share-with-user/`, {
         username: username,
-        permission_level: null, // Indicate removal
+        permission_level: null,
       });
       toast.success(`Access revoked for ${username}.`);
-      // Re-fetch shared users to update the list
       const response = await axios.get(`api/documents/conversations/${documentId}/`);
       setSharedUsers(response.data.shared_with_users || []);
     } catch (error) {
@@ -110,7 +105,6 @@ const ShareModal = ({ documentId, documentTitle, onClose, initialSharedWithUsers
         permission_level: newPermissionLevel,
       });
       toast.success(`Permissions updated for ${username}.`);
-      // Re-fetch shared users to update the list
       const response = await axios.get(`api/documents/conversations/${documentId}/`);
       setSharedUsers(response.data.shared_with_users || []);
     } catch (error) {
@@ -121,104 +115,154 @@ const ShareModal = ({ documentId, documentTitle, onClose, initialSharedWithUsers
     }
   };
 
-
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-      <Card className="w-full max-w-lg bg-card border-border">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Share "{documentTitle}"</CardTitle>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+    <div className="fixed inset-0 bg-slate-950/65 backdrop-blur-xl flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="w-full max-w-lg glass-panel glass-reactive p-6 sm:p-8 rounded-[2.25rem] border border-white/30 shadow-fluffy space-y-6">
+        {/* Modal Header */}
+        <div className="relative z-10 flex items-center justify-between pb-4 border-b border-white/15">
+          <div className="flex items-center gap-3">
+            <div className="glass-circle w-11 h-11 shadow-glass-glow">
+              <Share2 className="w-5 h-5 text-cyan-300" />
+            </div>
+            <div>
+              <h3 className="text-lg font-extrabold text-white leading-tight font-display">Share Document</h3>
+              <p className="text-xs text-slate-300/80 truncate max-w-xs">{documentTitle}</p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            onClick={onClose}
+            variant="glass-circle"
+            size="icon-sm"
+            className="w-8 h-8 text-slate-300 hover:text-white"
+            aria-label="Close share modal"
+          >
             <X className="w-4 h-4" />
           </Button>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Public Share Link Section */}
-          <div className="space-y-4 border-b pb-4">
-            <h3 className="text-lg font-semibold">Public Share Link</h3>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="public-edit-permission"
-                checked={publicPermissionLevel === 'edit'}
-                onCheckedChange={(checked) => setPublicPermissionLevel(checked ? 'edit' : 'view')}
-                disabled={loading}
-              />
-              <Label htmlFor="public-edit-permission">Allow public editing</Label>
-            </div>
-            <Button onClick={generateLink} disabled={loading}>
-              {loading ? 'Generating...' : 'Generate/Update Public Link'}
-            </Button>
-            {shareUrl && (
-              <div className="flex items-center space-x-2">
-                <Input value={shareUrl} readOnly />
-                <Button onClick={handleCopyToClipboard} size="icon">
-                  <Copy className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
+        </div>
+
+        {/* Public Share Link Section */}
+        <div className="relative z-10 space-y-3 pb-5 border-b border-white/15">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-cyan-300">
+            <Globe className="w-4 h-4" />
+            <span>Public Access Link</span>
           </div>
 
-          {/* Share with Specific Users Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Share with Specific Users</h3>
-            <div className="flex gap-2">
+          <div className="flex items-center justify-between p-3.5 rounded-2xl glass-subtle">
+            <div>
+              <p className="text-sm font-semibold text-white">Public Editing</p>
+              <p className="text-xs text-slate-400">Allow anyone with this link to edit clauses</p>
+            </div>
+            <Switch
+              id="public-edit-permission"
+              checked={publicPermissionLevel === 'edit'}
+              onCheckedChange={(checked) => setPublicPermissionLevel(checked ? 'edit' : 'view')}
+              disabled={loading}
+            />
+          </div>
+
+          <Button
+            onClick={generateLink}
+            disabled={loading}
+            variant="aurora"
+            className="w-full h-10 text-xs"
+          >
+            {loading ? 'Generating Link...' : 'Generate / Refresh Link'}
+          </Button>
+
+          {shareUrl && (
+            <div className="flex items-center gap-2 pt-1">
               <Input
-                type="text"
-                placeholder="Username"
-                value={usernameToShare}
-                onChange={(e) => setUsernameToShare(e.target.value)}
-                disabled={loading}
+                value={shareUrl}
+                readOnly
+                className="flex-1 h-10 text-xs font-mono rounded-full"
               />
-              <Select value={userPermissionLevel} onValueChange={setUserPermissionLevel} disabled={loading}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="Permission" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="view">View</SelectItem>
-                  <SelectItem value="edit">Edit</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button onClick={handleShareWithUser} disabled={loading || !usernameToShare.trim()}>
-                <UserPlus className="w-4 h-4 mr-2" /> Share
+              <Button
+                onClick={handleCopyToClipboard}
+                variant="glass"
+                className="h-10 px-4 text-xs flex-shrink-0"
+              >
+                <Copy className="w-4 h-4 text-cyan-300" />
+                <span>Copy</span>
               </Button>
             </div>
+          )}
+        </div>
 
-            {/* List of Shared Users */}
-            {sharedUsers.length > 0 && (
-              <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
-                <p className="text-sm text-muted-foreground">Currently shared with:</p>
-                {sharedUsers.map((user) => (
-                  <div key={user.username} className="flex items-center justify-between bg-muted/50 p-2 rounded-md">
-                    <span className="font-medium">{user.username}</span>
-                    <div className="flex items-center gap-2">
-                      <Select
-                        value={user.permission_level}
-                        onValueChange={(newLevel) => handleChangeUserPermission(user.username, newLevel)}
-                        disabled={loading}
-                      >
-                        <SelectTrigger className="w-[100px] h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="view">View</SelectItem>
-                          <SelectItem value="edit">Edit</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => handleRemoveUserShare(user.username)}
-                        disabled={loading}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+        {/* Share with Specific Users Section */}
+        <div className="relative z-10 space-y-3">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-300">
+            <Users className="w-4 h-4" />
+            <span>Direct Collaborator Invite</span>
           </div>
-        </CardContent>
-      </Card>
+
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="Enter username"
+              value={usernameToShare}
+              onChange={(e) => setUsernameToShare(e.target.value)}
+              disabled={loading}
+              className="flex-1 h-10 text-xs rounded-full"
+            />
+            <Select value={userPermissionLevel} onValueChange={setUserPermissionLevel} disabled={loading}>
+              <SelectTrigger className="w-[110px] h-10 text-xs rounded-full">
+                <SelectValue placeholder="Access" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="view">View</SelectItem>
+                <SelectItem value="edit">Edit</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              onClick={handleShareWithUser}
+              disabled={loading || !usernameToShare.trim()}
+              variant="default"
+              className="h-10 px-4 text-xs"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Add</span>
+            </Button>
+          </div>
+
+          {/* List of Shared Users */}
+          {sharedUsers.length > 0 && (
+            <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pt-2">
+              <p className="text-xs text-slate-400 font-medium">Collaborators with access:</p>
+              {sharedUsers.map((user) => (
+                <div key={user.username} className="flex items-center justify-between p-2.5 rounded-2xl glass-subtle text-xs">
+                  <span className="font-semibold text-white">@{user.username}</span>
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={user.permission_level}
+                      onValueChange={(newLevel) => handleChangeUserPermission(user.username, newLevel)}
+                      disabled={loading}
+                    >
+                      <SelectTrigger className="w-[85px] h-7 text-[11px] rounded-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="view">View</SelectItem>
+                        <SelectItem value="edit">Edit</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      onClick={() => handleRemoveUserShare(user.username)}
+                      disabled={loading}
+                      variant="glass-circle"
+                      size="icon-sm"
+                      className="w-7 h-7 text-rose-300 hover:text-rose-100 hover:border-rose-400/60"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

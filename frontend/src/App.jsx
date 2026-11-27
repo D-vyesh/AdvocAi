@@ -1,39 +1,43 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./Components/Navbar/Navbar";
-import Footer from "./Components/Footer";
+import LiquidGlassCursor from "./Components/LiquidGlassCursor";
+import AmbientGlassBackdrop from "./Components/AmbientGlassBackdrop";
 import Home from "./pages/Home";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
-import VerifyOtp from "./pages/VerifyOtp"; // Added this import
-import ForgotPassword from "./pages/ForgotPassword"; // Import ForgotPassword
-import ResetPassword from "./pages/ResetPassword"; // Import ResetPassword
-
-
+import VerifyOtp from "./pages/VerifyOtp";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
 import DocumentAnalyzer from "./pages/DocumentAnalyzer";
 import MyDocuments from "./pages/MyDocuments";
 import DocumentCreation from "./pages/DocumentCreation";
 import DocumentVersions from "./pages/DocumentVersions";
 import SharedDocumentView from "./pages/SharedDocumentView";
-import ParticlesComponent from "./Components/Particles";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import { Toaster } from 'react-hot-toast';
+import { AuthProvider } from './context/AuthContext';
 
 function AppContent() {
   const location = useLocation();
-  const hideNavbarRoutes = ['/login', '/signup', '/forgot-password', '/reset-password']; // Updated hideNavbarRoutes
+  const hideNavbarRoutes = ['/login', '/signup', '/forgot-password', '/reset-password'];
   const shouldShowNavbar = !hideNavbarRoutes.includes(location.pathname);
 
   return (
-    <div className="relative flex flex-col h-screen bg-background text-white" style={{ '--navbar-height': '4.5rem' }}> {/* Set a reasonable navbar height */}
-      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-gray-900 via-gray-800 to-black opacity-60" style={{ zIndex: -2 }}></div>
-      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-3/4 h-3/4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/30 via-purple-900/20 to-transparent blur-3xl" style={{ zIndex: -1 }}></div>
+    <div className="relative min-h-screen bg-[#060914] text-white overflow-x-hidden selection:bg-cyan-400/30 selection:text-white">
+      {/* Lush Fluffy Aurora & Floating Glass Bubbles Backdrop */}
+      <AmbientGlassBackdrop />
+
+      {/* Interactive Liquid Glass Cursor Lens & Ripple System */}
+      <LiquidGlassCursor />
+
+      {/* Floating Glass Dock Navigation */}
       {shouldShowNavbar && <Navbar />}
-      <div style={{ position: 'absolute', zIndex: -1, width: '100%', height: '100%', opacity: 0.4 }}>
-        <ParticlesComponent id="tsparticles" />
-      </div>
-      <main className="flex-grow relative z-10" style={{ height: 'calc(100vh - var(--navbar-height))' }}> {/* Use calc() for main height */}
+
+      {/* Main Workspace Viewport */}
+      <main className="relative z-10 w-full flex-grow">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route
@@ -94,8 +98,8 @@ function AppContent() {
           />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} /> {/* Added ForgotPassword route */}
-          <Route path="/reset-password" element={<ResetPassword />} /> {/* Added ResetPassword route */}
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route
             path="/verify-otp"
             element={<VerifyOtp />}
@@ -118,19 +122,30 @@ function AppContent() {
           />
         </Routes>
       </main>
-      {/* {shouldShowNavbar && <Footer />} */}
     </div>
   );
 }
 
-import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './context/AuthContext'; // Import AuthProvider
-
 function App() {
   return (
     <Router>
-      <Toaster position="bottom-right" />
-      <AuthProvider> {/* Wrap AppContent with AuthProvider */}
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          style: {
+            background: 'linear-gradient(145deg, rgba(24, 38, 72, 0.85), rgba(12, 20, 42, 0.92))',
+            backdropFilter: 'blur(28px) saturate(200%)',
+            WebkitBackdropFilter: 'blur(28px) saturate(200%)',
+            border: '1px solid rgba(255, 255, 255, 0.28)',
+            boxShadow: 'inset 0 2px 3px rgba(255, 255, 255, 0.55), 0 18px 40px rgba(0, 0, 0, 0.55), 0 0 24px rgba(0, 212, 255, 0.2)',
+            color: '#fff',
+            borderRadius: '9999px',
+            padding: '11px 22px',
+            fontWeight: 600,
+          },
+        }}
+      />
+      <AuthProvider>
         <AppContent />
       </AuthProvider>
     </Router>

@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from '../api/axios';
-import { FileText, Download, History } from 'lucide-react';
+import { FileText, Download, History, ArrowLeft, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { saveAs } from 'file-saver';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/Components/ui/Card';
-import { Button } from '@/Components/ui/Button';
+import { Button } from '@/Components/ui/button';
 
 const DocumentVersions = () => {
-  const { id } = useParams(); // conversation ID
+  const { id } = useParams();
   const navigate = useNavigate();
   const [versions, setVersions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +35,7 @@ const DocumentVersions = () => {
   const handleDownloadVersionPdf = async (versionNumber) => {
     try {
       const response = await axios.get(`utils/conversations/${id}/versions/${versionNumber}/download-pdf/`, {
-        responseType: 'blob', // Important for downloading files
+        responseType: 'blob',
       });
       const filename = `${documentTitle}_v${versionNumber}.pdf`;
       const blob = new Blob([response.data], { type: 'application/pdf' });
@@ -50,10 +49,10 @@ const DocumentVersions = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="flex items-center text-blue-600 text-xl font-medium">
-          <History className="w-6 h-6 animate-spin mr-3" />
-          Loading document versions...
+      <div className="min-h-[calc(100vh-5.5rem)] flex items-center justify-center">
+        <div className="glass-panel p-8 rounded-[2rem] text-center">
+          <History className="w-8 h-8 animate-spin text-cyan-400 mx-auto mb-2" />
+          <p className="text-xs text-slate-300">Loading version history...</p>
         </div>
       </div>
     );
@@ -61,70 +60,84 @@ const DocumentVersions = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-red-600 text-xl font-medium">{error}</div>
+      <div className="min-h-[calc(100vh-5.5rem)] flex items-center justify-center p-4">
+        <div className="glass-panel p-8 rounded-[2rem] text-center text-rose-400 text-sm">
+          {error}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen py-8 animate-fade-in">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center gap-2 mb-3 px-3 py-1 bg-blue-500/10 rounded-full border border-blue-500/20">
-            <History className="w-4 h-4 text-blue-400" />
-            <span className="text-blue-400 text-xs font-medium">Version History</span>
-          </div>
-          <h1 className="text-4xl font-bold text-white mb-2">
-            Document Versions
-          </h1>
-          <p className="text-gray-400">
-            Viewing versions for: <span className="font-medium text-blue-400">{documentTitle}</span>
-          </p>
-        </div>
+    <div className="min-h-[calc(100vh-5.5rem)] px-4 sm:px-6 lg:px-8 py-8 max-w-4xl mx-auto space-y-6">
 
-        {versions.length === 0 ? (
-          <div className="bg-gray-800/30 border border-gray-700/50 rounded-lg p-12 text-center">
-            <History className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-            <p className="text-gray-400">No versions found for this document.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-3">
-            {versions.map((version, index) => (
-              <Card 
-                key={version.version_number} 
-                className="bg-gray-800/40 backdrop-blur-sm border border-gray-700/50 hover:border-gray-600 transition-all duration-200 animate-fade-in-up"
-                style={{ animationDelay: `${index * 0.05}s` }}
-              >
-                <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <h2 className="text-lg font-semibold text-white mb-1">Version {version.version_number}</h2>
-                    <p className="text-gray-400 text-xs">
-                      Created: {new Date(version.timestamp).toLocaleDateString()} {new Date(version.timestamp).toLocaleTimeString()}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleDownloadVersionPdf(version.version_number)}
-                      className="bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 text-sm"
-                    >
-                      <Download className="w-3.5 h-3.5 mr-1.5" />
-                      <span>PDF</span>
-                    </Button>
-                    <Button
-                      onClick={() => navigate(`/document-creation/${id}?version=${version.version_number}`)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 text-sm"
-                    >
-                      <FileText className="w-3.5 h-3.5 mr-1.5" />
-                      <span>Edit</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+      {/* Back button & Title */}
+      <div className="flex items-center gap-4">
+        <Button
+          type="button"
+          onClick={() => navigate(-1)}
+          variant="glass-circle"
+          size="icon"
+          className="w-10 h-10 text-slate-200 hover:text-white"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <div>
+          <h1 className="text-3xl font-black text-white tracking-tight font-display">Version Snapshots</h1>
+          <p className="text-xs text-slate-300/80">Chronological history for: <span className="text-cyan-300 font-semibold">{documentTitle}</span></p>
+        </div>
       </div>
+
+      {versions.length === 0 ? (
+        <div className="glass-panel p-12 rounded-[2rem] text-center">
+          <History className="w-10 h-10 text-slate-400 mx-auto mb-3 opacity-40" />
+          <p className="text-sm text-slate-300">No versions recorded for this document.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {versions.map((version) => (
+            <div
+              key={version.version_number}
+              className="glass-panel glass-reactive glass-panel-interactive p-5 rounded-3xl border border-white/25 flex flex-col sm:flex-row items-center justify-between gap-4"
+            >
+              <div className="relative z-10 flex items-center gap-3">
+                <div className="glass-circle w-10 h-10">
+                  <FileText className="w-5 h-5 text-cyan-300" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white font-display">Version {version.version_number}</h3>
+                  <p className="text-xs text-slate-300/80 flex items-center gap-1.5 mt-0.5">
+                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{new Date(version.timestamp).toLocaleString()}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative z-10 flex items-center gap-2 w-full sm:w-auto">
+                <Button
+                  onClick={() => handleDownloadVersionPdf(version.version_number)}
+                  size="sm"
+                  variant="glass"
+                  className="h-9 px-4 text-xs flex-1 sm:flex-none text-white"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>PDF</span>
+                </Button>
+
+                <Button
+                  onClick={() => navigate(`/document-creation/${id}?version=${version.version_number}`)}
+                  size="sm"
+                  variant="aurora"
+                  className="h-9 px-4 text-xs flex-1 sm:flex-none"
+                >
+                  <FileText className="w-3.5 h-3.5 text-cyan-300" />
+                  <span>Open & Edit</span>
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -3,218 +3,965 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Native hardware-accelerated CSS properties for prismatic conic borders & cursor lighting */
+@property --btn-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@property --glass-angle {
+  syntax: '<angle>';
+  initial-value: 135deg;
+  inherits: false;
+}
+
 :root {
-  --background: #0f172e;
-  --foreground: #f5f5f5;
-  --card: #1a2847;
-  --card-foreground: #f5f5f5;
-  --popover: #1a2847;
-  --popover-foreground: #f5f5f5;
+  --background: #060914;
+  --foreground: #f8fafc;
+  --card: rgba(24, 38, 74, 0.42);
+  --card-foreground: #f8fafc;
+  --popover: rgba(16, 26, 52, 0.8);
+  --popover-foreground: #f8fafc;
   --primary: #00d4ff;
-  --primary-foreground: #0f172e;
-  --secondary: gold;
-  --secondary-foreground: #0f172e;
-  --muted: #3a4a6b;
-  --muted-foreground: #a0aac0;
-  --accent: #0fc;
-  --accent-foreground: #0f172e;
-  --destructive: #f44;
-  --destructive-foreground: #fff;
-  --border: #2a3a5b;
-  --input: #1a2847;
+  --primary-foreground: #030814;
+  --secondary: #f59e0b;
+  --secondary-foreground: #030814;
+  --muted: rgba(255, 255, 255, 0.1);
+  --muted-foreground: #cbd5e1;
+  --accent: #00f5b4;
+  --accent-foreground: #030814;
+  --destructive: #ff4d6d;
+  --destructive-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.24);
+  --input: rgba(255, 255, 255, 0.09);
   --ring: #00d4ff;
-  --chart-1: #00d4ff;
-  --chart-2: gold;
-  --chart-3: #0fc;
-  --chart-4: #1e90ff;
-  --chart-5: #00bfff;
-  --radius: 0.625rem;
+  --radius: 1.35rem;
+  --cursor-x: 50vw;
+  --cursor-y: 50vh;
 }
 
 .dark {
-  --background: #0f172e;
-  --foreground: #f5f5f5;
-  --card: #1a2847;
-  --card-foreground: #f5f5f5;
-  --popover: #1a2847;
-  --popover-foreground: #f5f5f5;
+  --background: #060914;
+  --foreground: #f8fafc;
+  --card: rgba(24, 38, 74, 0.42);
+  --card-foreground: #f8fafc;
+  --popover: rgba(16, 26, 52, 0.8);
+  --popover-foreground: #f8fafc;
   --primary: #00d4ff;
-  --primary-foreground: #0f172e;
-  --secondary: gold;
-  --secondary-foreground: #0f172e;
-  --muted: #3a4a6b;
-  --muted-foreground: #a0aac0;
-  --accent: #0fc;
-  --accent-foreground: #0f172e;
-  --destructive: #f44;
-  --destructive-foreground: #fff;
-  --border: #2a3a5b;
-  --input: #1a2847;
+  --primary-foreground: #030814;
+  --secondary: #f59e0b;
+  --secondary-foreground: #030814;
+  --muted: rgba(255, 255, 255, 0.1);
+  --muted-foreground: #cbd5e1;
+  --accent: #00f5b4;
+  --accent-foreground: #030814;
+  --destructive: #ff4d6d;
+  --destructive-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.24);
+  --input: rgba(255, 255, 255, 0.09);
   --ring: #00d4ff;
-  --chart-1: #00d4ff;
-  --chart-2: gold;
-  --chart-3: #0fc;
-  --chart-4: #1e90ff;
-  --chart-5: #00bfff;
-  --radius: 0.625rem;
+  --radius: 1.35rem;
 }
 
- @layer base {
+@keyframes spin-conic {
+  to {
+    --btn-angle: 360deg;
+  }
+}
+
+@keyframes liquid-ripple-expand {
+  0% {
+    transform: translate(-50%, -50%) scale(0.22);
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(3.1);
+    opacity: 0;
+  }
+}
+
+@layer base {
   * {
-    @apply border-border outline-ring;
+    border-color: var(--border);
   }
-  body {
-    @apply bg-background text-foreground;
-    background-image:
-      linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-    background-size: 40px 40px;
-    animation: background-pan 60s linear infinite;
+
+  html, body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: "Plus Jakarta Sans", "Outfit", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
   }
 }
 
-@keyframes background-pan {
-  from {
-    background-position: 0% 0%;
+/* Custom Liquid Glass Cursor Active State (Fine Pointer Devices Only) */
+@media (pointer: fine) {
+  html.liquid-cursor-enabled,
+  html.liquid-cursor-enabled * {
+    cursor: none !important;
   }
-  to {
-    background-position: 100% 100%;
+
+  html.liquid-cursor-enabled input,
+  html.liquid-cursor-enabled textarea,
+  html.liquid-cursor-enabled select,
+  html.liquid-cursor-enabled [contenteditable="true"],
+  html.liquid-cursor-enabled .ProseMirror,
+  html.liquid-cursor-enabled .ProseMirror * {
+    cursor: text !important;
   }
 }
 
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* =========================================================================
+   FLUFFY CLOUD-GLASS & LIQUID CRYSTAL DESIGN SYSTEM
+   Plush inflated 3D pillow bevels, milky frost refraction & elastic springs
+   ========================================================================= */
+
+/* Plush Pillowy Cloud-Glass Panel */
+.glass-panel {
+  position: relative;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.21) 0%,
+    rgba(218, 238, 255, 0.09) 46%,
+    rgba(135, 200, 255, 0.07) 100%
+  );
+  border: 1.25px solid rgba(255, 255, 255, 0.28);
+  border-top-color: rgba(255, 255, 255, 0.56);
+  border-left-color: rgba(255, 255, 255, 0.36);
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+  border-radius: 2.25rem;
+  backdrop-filter: blur(38px) saturate(225%);
+  -webkit-backdrop-filter: blur(38px) saturate(225%);
+  box-shadow:
+    inset 0 3px 6px 0 rgba(255, 255, 255, 0.72),
+    inset 0 18px 40px -6px rgba(255, 255, 255, 0.12),
+    inset 0 -10px 22px 0 rgba(5, 12, 30, 0.42),
+    inset 0 -2px 4px 0 rgba(165, 225, 255, 0.16),
+    0 26px 65px -14px rgba(0, 0, 0, 0.58),
+    0 0 42px -12px rgba(0, 212, 255, 0.22);
+  transition:
+    transform 0.48s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s ease,
+    background 0.35s ease;
 }
 
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Soft Curved Blown-Glass Dome Reflection Overlay */
+.fluffy-dome::before,
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  inset: 2px 3px auto 3px;
+  height: 48%;
+  border-radius: inherit;
+  border-bottom-left-radius: 52% 20%;
+  border-bottom-right-radius: 52% 20%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.28) 0%,
+    rgba(255, 255, 255, 0.06) 52%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 0;
 }
 
-@layer utilities {
-  .animate-fade-in {
-    animation: fade-in 0.6s ease-out forwards;
-  }
-
-  .animate-fade-in-up {
-    animation: fade-in-up 0.6s ease-out forwards;
-    opacity: 0;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 4px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(59, 130, 246, 0.5);
-    border-radius: 4px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(59, 130, 246, 0.7);
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
-  }
+/* Cursor-reactive Specular Glint Layer (uses --mx / --my set on mousemove) */
+.glass-reactive {
+  --mx: 50%;
+  --my: 25%;
+  overflow: hidden;
 }
 
-/* Basic Markdown Styling for ReactMarkdown */
+.glass-reactive::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    380px circle at var(--mx) var(--my),
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(56, 225, 255, 0.12) 28%,
+    rgba(168, 85, 247, 0.06) 54%,
+    transparent 76%
+  );
+  opacity: 0;
+  transition: opacity 0.32s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glass-reactive:hover::after {
+  opacity: 1;
+}
+
+.glass-panel-interactive {
+  will-change: transform;
+}
+
+.glass-panel-interactive:hover {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.26) 0%,
+    rgba(218, 242, 255, 0.12) 48%,
+    rgba(0, 212, 255, 0.11) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow:
+    inset 0 3.5px 7px 0 rgba(255, 255, 255, 0.85),
+    inset 0 20px 44px -6px rgba(255, 255, 255, 0.18),
+    inset 0 -8px 20px 0 rgba(5, 12, 30, 0.34),
+    0 32px 75px -12px rgba(0, 0, 0, 0.65),
+    0 0 50px -6px rgba(0, 212, 255, 0.34);
+  transform: translateY(-6px) scale(1.015);
+}
+
+.glass-panel-interactive:active {
+  transform: translateY(-1px) scale(0.988);
+}
+
+/* Soft Cushioned Nested Glass Tile */
+.glass-subtle {
+  position: relative;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.045) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-top-color: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(22px) saturate(200%);
+  -webkit-backdrop-filter: blur(22px) saturate(200%);
+  box-shadow:
+    inset 0 2px 3px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -4px 8px 0 rgba(0, 0, 0, 0.28),
+    0 10px 24px -6px rgba(0, 0, 0, 0.35);
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Floating Plush Glass Dock */
+.glass-dock {
+  position: relative;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.08) 54%,
+    rgba(56, 189, 248, 0.08) 100%
+  );
+  border: 1.25px solid rgba(255, 255, 255, 0.32);
+  border-top-color: rgba(255, 255, 255, 0.65);
+  border-radius: 9999px;
+  backdrop-filter: blur(40px) saturate(225%);
+  -webkit-backdrop-filter: blur(40px) saturate(225%);
+  box-shadow:
+    inset 0 2.5px 4px 0 rgba(255, 255, 255, 0.8),
+    inset 0 10px 22px -6px rgba(255, 255, 255, 0.14),
+    inset 0 -4px 10px 0 rgba(0, 0, 0, 0.34),
+    0 22px 54px -10px rgba(0, 0, 0, 0.62),
+    0 0 38px -8px rgba(0, 212, 255, 0.28);
+}
+
+/* =========================================================================
+   ATTRACTIVE FLUFFY & LIQUID GLASS BUTTON FORMATIONS
+   Synthesized from Liquid Glass + Prismatic Conic Gel + Fluffy Claymorphism
+   ========================================================================= */
+
+.btn-fluffy-base,
+.glass-pill,
+.glass-circle,
+.glass-btn-primary,
+.glass-btn-secondary,
+.btn-fluffy-aurora,
+.btn-fluffy-emerald,
+.btn-fluffy-danger {
+  --mx: 50%;
+  --my: 50%;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1),
+    translate 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.32s ease,
+    border-color 0.32s ease,
+    filter 0.28s ease;
+}
+
+/* 1. Frosted Cloud Pillow Pill (Glass / Outline) */
+.glass-pill,
+.btn-fluffy-glass {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.27) 0%,
+    rgba(255, 255, 255, 0.1) 52%,
+    rgba(165, 230, 255, 0.12) 100%
+  );
+  border: 1.25px solid rgba(255, 255, 255, 0.36);
+  border-top-color: rgba(255, 255, 255, 0.72);
+  border-bottom-color: rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+  backdrop-filter: blur(28px) saturate(215%);
+  -webkit-backdrop-filter: blur(28px) saturate(215%);
+  box-shadow:
+    inset 0 2.5px 4px 0 rgba(255, 255, 255, 0.84),
+    inset 0 10px 18px -5px rgba(255, 255, 255, 0.22),
+    inset 0 -4px 9px 0 rgba(0, 0, 0, 0.34),
+    0 12px 28px -6px rgba(0, 0, 0, 0.48);
+}
+
+.glass-pill::before,
+.btn-fluffy-glass::before {
+  content: '';
+  position: absolute;
+  inset: 2px 6% auto 6%;
+  height: 46%;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.48) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glass-pill::after,
+.btn-fluffy-glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    120px circle at var(--mx) var(--my),
+    rgba(255, 255, 255, 0.36) 0%,
+    rgba(0, 212, 255, 0.18) 40%,
+    transparent 75%
+  );
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glass-pill:hover,
+.btn-fluffy-glass:hover {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.38) 0%,
+    rgba(255, 255, 255, 0.15) 52%,
+    rgba(0, 212, 255, 0.22) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.65);
+  box-shadow:
+    inset 0 3px 5px 0 rgba(255, 255, 255, 0.96),
+    inset 0 12px 22px -5px rgba(255, 255, 255, 0.3),
+    inset 0 -4px 8px 0 rgba(0, 0, 0, 0.26),
+    0 18px 38px -6px rgba(0, 0, 0, 0.55),
+    0 0 28px rgba(0, 212, 255, 0.32);
+  transform: translateY(-3px) scale(1.035);
+}
+
+.glass-pill:hover::after,
+.btn-fluffy-glass:hover::after {
+  opacity: 1;
+}
+
+.glass-pill:active,
+.btn-fluffy-glass:active {
+  transform: translateY(1px) scale(0.935);
+  transition-duration: 0.12s;
+  box-shadow:
+    inset 0 2px 6px 0 rgba(0, 0, 0, 0.42),
+    0 4px 14px -2px rgba(0, 0, 0, 0.42);
+}
+
+/* 2. Dewdrop Convex Glass Orb (Circular Buttons) */
+.glass-circle,
+.btn-fluffy-orb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle at 30% 25%,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.15) 45%,
+    rgba(0, 212, 255, 0.12) 100%
+  );
+  border: 1.25px solid rgba(255, 255, 255, 0.4);
+  border-top-color: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(28px) saturate(220%);
+  -webkit-backdrop-filter: blur(28px) saturate(220%);
+  box-shadow:
+    inset 0 2.5px 4px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -4px 8px 0 rgba(0, 0, 0, 0.36),
+    0 12px 26px -5px rgba(0, 0, 0, 0.48);
+}
+
+.glass-circle::before,
+.btn-fluffy-orb::before {
+  content: '';
+  position: absolute;
+  top: 8%;
+  left: 18%;
+  width: 46%;
+  height: 28%;
+  border-radius: 9999px;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.78) 0%, transparent 78%);
+  transform: rotate(-18deg);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glass-circle:hover,
+.btn-fluffy-orb:hover {
+  background: radial-gradient(
+    circle at 30% 25%,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.22) 45%,
+    rgba(0, 212, 255, 0.28) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.68);
+  box-shadow:
+    inset 0 3px 5px 0 rgba(255, 255, 255, 0.98),
+    inset 0 -4px 7px 0 rgba(0, 0, 0, 0.25),
+    0 18px 34px -5px rgba(0, 0, 0, 0.55),
+    0 0 26px rgba(0, 212, 255, 0.42);
+  transform: translateY(-3px) scale(1.1);
+}
+
+.glass-circle:active,
+.btn-fluffy-orb:active {
+  transform: scale(0.89);
+  transition-duration: 0.12s;
+  box-shadow:
+    inset 0 2px 6px 0 rgba(0, 0, 0, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+/* 3. Primary Liquid Gel Cushion Pill (Cyan-Azure Volumetric Jelly) */
+.glass-btn-primary,
+.btn-fluffy-primary {
+  background: linear-gradient(
+    135deg,
+    rgba(88, 238, 255, 0.95) 0%,
+    rgba(14, 165, 233, 0.9) 52%,
+    rgba(59, 130, 246, 0.92) 100%
+  );
+  border: 1.25px solid rgba(255, 255, 255, 0.62);
+  border-top-color: rgba(255, 255, 255, 0.92);
+  border-radius: 9999px;
+  color: #030b1a;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  backdrop-filter: blur(24px) saturate(210%);
+  -webkit-backdrop-filter: blur(24px) saturate(210%);
+  box-shadow:
+    inset 0 3px 5px 0 rgba(255, 255, 255, 0.95),
+    inset 0 12px 22px -6px rgba(255, 255, 255, 0.5),
+    inset 0 -5px 10px 0 rgba(3, 55, 110, 0.42),
+    0 14px 32px -5px rgba(0, 212, 255, 0.58),
+    0 0 24px rgba(0, 212, 255, 0.28);
+}
+
+.glass-btn-primary::before,
+.btn-fluffy-primary::before {
+  content: '';
+  position: absolute;
+  inset: 2px 7% auto 7%;
+  height: 46%;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glass-btn-primary::after,
+.btn-fluffy-primary::after {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: -130%;
+  width: 58%;
+  height: 140%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.72),
+    transparent
+  );
+  transform: skewX(-24deg);
+  transition: left 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glass-btn-primary:hover,
+.btn-fluffy-primary:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(128, 246, 255, 0.98) 0%,
+    rgba(34, 211, 238, 0.95) 50%,
+    rgba(96, 165, 250, 0.96) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.88);
+  box-shadow:
+    inset 0 3.5px 6px 0 rgba(255, 255, 255, 0.98),
+    inset 0 14px 24px -6px rgba(255, 255, 255, 0.58),
+    inset 0 -4px 9px 0 rgba(3, 55, 110, 0.34),
+    0 20px 44px -6px rgba(0, 212, 255, 0.74),
+    0 0 38px rgba(0, 212, 255, 0.54);
+  transform: translateY(-3.5px) scale(1.045);
+}
+
+.glass-btn-primary:hover::after,
+.btn-fluffy-primary:hover::after {
+  left: 165%;
+}
+
+.glass-btn-primary:active,
+.btn-fluffy-primary:active {
+  transform: translateY(1.5px) scale(0.945);
+  transition-duration: 0.12s;
+  box-shadow:
+    inset 0 2px 7px 0 rgba(0, 40, 80, 0.45),
+    0 5px 16px rgba(0, 212, 255, 0.42);
+}
+
+/* 4. Conic Prism Aurora Liquid-Crystal Pill (Translucent Frosted Gel Core) */
+.btn-fluffy-aurora {
+  border-radius: 9999px;
+  border: 1.75px solid transparent;
+  color: #ffffff;
+  font-weight: 800;
+  letter-spacing: 0.015em;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.24) 0%,
+      rgba(56, 189, 248, 0.16) 52%,
+      rgba(168, 85, 247, 0.18) 100%
+    ) padding-box,
+    conic-gradient(
+      from var(--btn-angle),
+      #00e5ff,
+      #7dd3fc,
+      #a78bfa,
+      #f472b6,
+      #34d399,
+      #00e5ff
+    ) border-box;
+  backdrop-filter: blur(30px) saturate(225%);
+  -webkit-backdrop-filter: blur(30px) saturate(225%);
+  animation: spin-conic 4s linear infinite;
+  box-shadow:
+    inset 0 2.5px 5px 0 rgba(255, 255, 255, 0.82),
+    inset 0 12px 24px -6px rgba(255, 255, 255, 0.22),
+    inset 0 -4px 10px 0 rgba(0, 12, 36, 0.38),
+    0 16px 38px -6px rgba(0, 212, 255, 0.46),
+    0 0 30px -4px rgba(168, 85, 247, 0.38);
+}
+
+.btn-fluffy-aurora::before {
+  content: '';
+  position: absolute;
+  inset: 2px 7% auto 7%;
+  height: 46%;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.56) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.btn-fluffy-aurora::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    140px circle at var(--mx) var(--my),
+    rgba(255, 255, 255, 0.44) 0%,
+    rgba(0, 229, 255, 0.24) 38%,
+    transparent 74%
+  );
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.btn-fluffy-aurora:hover {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.34) 0%,
+      rgba(56, 189, 248, 0.25) 52%,
+      rgba(192, 132, 252, 0.26) 100%
+    ) padding-box,
+    conic-gradient(
+      from var(--btn-angle),
+      #67e8f9,
+      #34d399,
+      #f472b6,
+      #c084fc,
+      #38bdf8,
+      #67e8f9
+    ) border-box;
+  box-shadow:
+    inset 0 3px 6px 0 rgba(255, 255, 255, 0.94),
+    inset 0 14px 28px -6px rgba(255, 255, 255, 0.32),
+    inset 0 -4px 10px 0 rgba(0, 12, 36, 0.32),
+    0 22px 48px -6px rgba(0, 212, 255, 0.62),
+    0 0 42px rgba(168, 85, 247, 0.48);
+  transform: translateY(-3.5px) scale(1.048);
+}
+
+.btn-fluffy-aurora:hover::after {
+  opacity: 1;
+}
+
+.btn-fluffy-aurora:active {
+  transform: translateY(1.5px) scale(0.945);
+  transition-duration: 0.12s;
+}
+
+/* 5. Secondary Warm Amber Plush Clay-Glass Pill */
+.glass-btn-secondary {
+  background: linear-gradient(
+    135deg,
+    rgba(253, 211, 77, 0.94) 0%,
+    rgba(245, 158, 11, 0.88) 50%,
+    rgba(244, 63, 94, 0.84) 100%
+  );
+  border: 1.25px solid rgba(255, 255, 255, 0.56);
+  border-top-color: rgba(255, 255, 255, 0.88);
+  border-radius: 9999px;
+  color: #160a02;
+  font-weight: 800;
+  backdrop-filter: blur(22px) saturate(210%);
+  -webkit-backdrop-filter: blur(22px) saturate(210%);
+  box-shadow:
+    inset 0 3px 5px 0 rgba(255, 255, 255, 0.92),
+    inset 0 10px 18px -6px rgba(255, 255, 255, 0.42),
+    inset 0 -4px 9px 0 rgba(120, 40, 0, 0.36),
+    0 14px 30px -5px rgba(245, 158, 11, 0.52);
+}
+
+.glass-btn-secondary::before {
+  content: '';
+  position: absolute;
+  inset: 2px 8% auto 8%;
+  height: 45%;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glass-btn-secondary:hover {
+  transform: translateY(-3.5px) scale(1.045);
+  box-shadow:
+    inset 0 3.5px 6px 0 rgba(255, 255, 255, 0.96),
+    0 20px 40px -6px rgba(245, 158, 11, 0.68),
+    0 0 32px rgba(245, 158, 11, 0.42);
+}
+
+.glass-btn-secondary:active {
+  transform: translateY(1.5px) scale(0.945);
+  transition-duration: 0.12s;
+}
+
+/* 6. Emerald Bio-Glass Pill (Sign, Verify, Save) */
+.btn-fluffy-emerald {
+  background: linear-gradient(
+    135deg,
+    rgba(52, 211, 153, 0.34) 0%,
+    rgba(16, 185, 129, 0.2) 55%,
+    rgba(6, 182, 212, 0.22) 100%
+  );
+  border: 1.25px solid rgba(110, 231, 183, 0.54);
+  border-top-color: rgba(255, 255, 255, 0.78);
+  border-radius: 9999px;
+  color: #ecfdf5;
+  font-weight: 700;
+  backdrop-filter: blur(26px) saturate(210%);
+  -webkit-backdrop-filter: blur(26px) saturate(210%);
+  box-shadow:
+    inset 0 2.5px 4px 0 rgba(255, 255, 255, 0.76),
+    inset 0 10px 18px -6px rgba(255, 255, 255, 0.18),
+    inset 0 -4px 8px 0 rgba(0, 0, 0, 0.32),
+    0 12px 28px -5px rgba(16, 185, 129, 0.38);
+}
+
+.btn-fluffy-emerald::before {
+  content: '';
+  position: absolute;
+  inset: 2px 7% auto 7%;
+  height: 45%;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.46) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.btn-fluffy-emerald:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(52, 211, 153, 0.46) 0%,
+    rgba(16, 185, 129, 0.28) 55%,
+    rgba(6, 182, 212, 0.3) 100%
+  );
+  border-color: rgba(167, 243, 208, 0.85);
+  color: #ffffff;
+  transform: translateY(-3px) scale(1.04);
+  box-shadow:
+    inset 0 3px 5px 0 rgba(255, 255, 255, 0.9),
+    0 18px 36px -6px rgba(16, 185, 129, 0.56),
+    0 0 28px rgba(52, 211, 153, 0.4);
+}
+
+.btn-fluffy-emerald:active {
+  transform: translateY(1px) scale(0.945);
+  transition-duration: 0.12s;
+}
+
+/* 7. Ruby Velvet Glass Danger Pill */
+.btn-fluffy-danger {
+  background: linear-gradient(
+    135deg,
+    rgba(244, 63, 94, 0.38) 0%,
+    rgba(225, 29, 72, 0.24) 100%
+  );
+  border: 1.25px solid rgba(253, 164, 175, 0.48);
+  border-top-color: rgba(255, 255, 255, 0.72);
+  border-radius: 9999px;
+  color: #ffe4e6;
+  font-weight: 700;
+  backdrop-filter: blur(26px) saturate(210%);
+  -webkit-backdrop-filter: blur(26px) saturate(210%);
+  box-shadow:
+    inset 0 2.5px 4px 0 rgba(255, 255, 255, 0.68),
+    inset 0 -4px 8px 0 rgba(0, 0, 0, 0.36),
+    0 12px 28px -5px rgba(244, 63, 94, 0.4);
+}
+
+.btn-fluffy-danger::before {
+  content: '';
+  position: absolute;
+  inset: 2px 7% auto 7%;
+  height: 45%;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.38) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.btn-fluffy-danger:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(244, 63, 94, 0.56) 0%,
+    rgba(225, 29, 72, 0.4) 100%
+  );
+  border-color: rgba(254, 205, 211, 0.78);
+  color: #ffffff;
+  transform: translateY(-3px) scale(1.04);
+  box-shadow:
+    inset 0 3px 5px 0 rgba(255, 255, 255, 0.85),
+    0 18px 36px -6px rgba(244, 63, 94, 0.58),
+    0 0 28px rgba(244, 63, 94, 0.38);
+}
+
+.btn-fluffy-danger:active {
+  transform: translateY(1px) scale(0.945);
+  transition-duration: 0.12s;
+}
+
+/* Keep button children cleanly above glossy ::before / ::after overlays */
+.glass-pill > *,
+.glass-circle > *,
+.glass-btn-primary > *,
+.glass-btn-secondary > *,
+.btn-fluffy-aurora > *,
+.btn-fluffy-emerald > *,
+.btn-fluffy-danger > *,
+.btn-fluffy-glass > *,
+.btn-fluffy-orb > *,
+.btn-fluffy-primary > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Glossy Surface Sheen Helper */
+.gloss-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Cushioned Glass Form Inputs */
+.glass-input {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.11) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  border: 1.25px solid rgba(255, 255, 255, 0.24);
+  border-bottom-color: rgba(255, 255, 255, 0.34);
+  backdrop-filter: blur(26px) saturate(200%);
+  -webkit-backdrop-filter: blur(26px) saturate(200%);
+  border-radius: 1.25rem;
+  color: #ffffff;
+  box-shadow:
+    inset 0 2px 6px 0 rgba(0, 0, 0, 0.36),
+    inset 0 -1px 1px 0 rgba(255, 255, 255, 0.18),
+    0 6px 18px -4px rgba(0, 0, 0, 0.28);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.glass-input::placeholder {
+  color: rgba(203, 213, 225, 0.52);
+}
+
+.glass-input:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.36);
+}
+
+.glass-input:focus {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(0, 212, 255, 0.78);
+  box-shadow:
+    inset 0 1px 3px 0 rgba(0, 0, 0, 0.22),
+    0 0 0 4px rgba(0, 212, 255, 0.22),
+    0 0 28px rgba(0, 212, 255, 0.3);
+  outline: none;
+}
+
+/* Liquid Click Ripple Element */
+.liquid-click-ripple {
+  position: fixed;
+  width: 38px;
+  height: 38px;
+  border-radius: 9999px;
+  pointer-events: none;
+  z-index: 9997;
+  border: 1.5px solid rgba(255, 255, 255, 0.78);
+  background: radial-gradient(
+    circle,
+    rgba(0, 212, 255, 0.28) 0%,
+    rgba(255, 255, 255, 0.12) 45%,
+    transparent 74%
+  );
+  box-shadow:
+    0 0 20px rgba(0, 212, 255, 0.5),
+    inset 0 1.5px 2px rgba(255, 255, 255, 0.85);
+  animation: liquid-ripple-expand 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Frosted Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.26);
+  border-radius: 9999px;
+  backdrop-filter: blur(6px);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.6);
+}
+
+/* TipTap & Markdown in Frosted Glass */
+.markdown-preview {
+  color: #f1f5f9;
+  line-height: 1.75;
+}
+
 .markdown-preview h1 {
-  font-size: 1.5em;
-  font-weight: bold;
-  margin-bottom: 0.5em;
+  font-size: 1.85rem;
+  font-weight: 800;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: #ffffff;
+  letter-spacing: -0.02em;
 }
 
 .markdown-preview h2 {
-  font-size: 1.2em;
-  font-weight: bold;
-  margin-bottom: 0.4em;
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: #f8fafc;
+  letter-spacing: -0.01em;
+}
+
+.markdown-preview h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+  color: #e2e8f0;
 }
 
 .markdown-preview p {
-  margin-bottom: 0.5em;
-  line-height: 1.4;
+  margin-bottom: 0.85rem;
+  color: #cbd5e1;
 }
 
 .markdown-preview ul, .markdown-preview ol {
-  margin-left: 1.5em;
-  margin-bottom: 0.5em;
+  margin-left: 1.5rem;
+  margin-bottom: 0.85rem;
+  color: #cbd5e1;
 }
 
 .markdown-preview ul li {
   list-style-type: disc;
+  margin-bottom: 0.25rem;
 }
 
 .markdown-preview ol li {
   list-style-type: decimal;
-}
-
-.markdown-preview strong {
-  font-weight: bold;
-}
-
-.markdown-preview em {
-  font-style: italic;
-}
-
-.markdown-preview a {
-  color: var(--primary);
-  text-decoration: underline;
+  margin-bottom: 0.25rem;
 }
 
 .markdown-preview blockquote {
-  border-left: 4px solid var(--border);
-  padding-left: 0.6em;
-  color: var(--muted-foreground);
-  margin-bottom: 0.5em;
+  border-left: 3px solid #00d4ff;
+  padding: 0.5rem 1rem;
+  margin: 1rem 0;
+  background: rgba(0, 212, 255, 0.08);
+  border-radius: 0 0.85rem 0.85rem 0;
+  color: #cbd5e1;
+  font-style: italic;
 }
 
 .markdown-preview code {
-  font-family: monospace;
-  background-color: var(--muted);
-  padding: 0.2em 0.4em;
-  border-radius: 3px;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.45rem;
+  font-size: 0.875em;
+  color: #67e8f9;
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .markdown-preview pre {
-  background-color: var(--muted);
-  padding: 0.8em;
-  border-radius: 5px;
+  background: rgba(8, 15, 32, 0.6);
+  padding: 1rem;
+  border-radius: 1.15rem;
   overflow-x: auto;
-  margin-bottom: 0.5em;
+  margin: 1rem 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
 }
 
 .markdown-preview pre code {
-  background-color: transparent;
+  background: transparent;
   padding: 0;
+  border: none;
 }

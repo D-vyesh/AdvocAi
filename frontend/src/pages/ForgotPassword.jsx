@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from '../api/axios';
 import toast from 'react-hot-toast';
-import { Button } from "@/Components/ui/Button";
+import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/Input";
 import { Label } from "@/Components/ui/Label";
+import { ArrowLeft, Mail, Sparkles } from 'lucide-react';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ const ForgotPassword = () => {
     try {
       const response = await axios.post('/api/auth/forgot-password/', { email });
       toast.success(response.data.message);
-      navigate('/reset-password', { state: { email } }); // Pass email to reset password page
+      navigate('/reset-password', { state: { email } });
     } catch (error) {
       console.error('Forgot password failed:', error);
       toast.error(error.response?.data?.error || 'Failed to send OTP.');
@@ -27,55 +28,66 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-      <button
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      <Button
         type="button"
+        variant="glass"
+        size="sm"
         onClick={() => navigate(-1)}
-        className="absolute top-4 left-4 z-20 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card/50 hover:bg-card/70 text-muted-foreground border border-border/50 shadow-lg backdrop-blur-md transition-all duration-200"
+        className="absolute top-6 left-6 z-20 px-4 py-2 text-xs text-slate-100 group"
       >
-        <span className="text-xl leading-none">←</span>
-        <span className="text-sm font-medium tracking-wide uppercase opacity-90">Go back</span>
-      </button>
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent"></div>
-      <div className="w-full max-w-md p-8 space-y-6 bg-card/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-border/50 relative z-10 animate-fade-in">
-        <div className="text-center">
-          <div className="inline-block mb-4 px-4 py-2 bg-primary/20 rounded-full border border-primary/30">
-            <span className="text-primary text-sm font-semibold">Forgot Password</span>
+        <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+        <span>Return</span>
+      </Button>
+
+      <div className="w-full max-w-md glass-panel glass-reactive p-8 sm:p-10 rounded-[2.5rem] border border-white/30 shadow-fluffy relative z-10 space-y-6 animate-fade-in">
+        <div className="relative z-10 text-center space-y-2">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 glass-pill mb-1">
+            <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
+            <span className="text-xs font-bold text-cyan-200 uppercase tracking-wider">
+              Account Recovery
+            </span>
           </div>
-          <h1 className="text-4xl font-extrabold text-foreground mb-2 bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-            Reset Your Password
+          <h1 className="text-3xl font-black text-white tracking-tight font-display">
+            Reset Password
           </h1>
-          <p className="text-muted-foreground">Enter your email address to receive a password reset OTP.</p>
+          <p className="text-xs text-slate-300/80">
+            Enter your email to receive an instant verification code
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-foreground font-medium">Email</Label>
+        <form onSubmit={handleSubmit} className="relative z-10 space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-xs font-semibold text-slate-200 pl-1 flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5 text-cyan-300" /> Account Email
+            </Label>
             <Input
               id="email"
               name="email"
               type="email"
-              placeholder="m@example.com"
+              placeholder="user@example.com"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
-              className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:border-primary focus:ring-primary/20 transition-all duration-300"
+              className="h-11 px-4 text-xs sm:text-sm rounded-full"
             />
           </div>
-          <Button 
-            type="submit" 
-            className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-foreground shadow-lg shadow-primary/50 hover:shadow-xl hover:shadow-primary/60 transition-all duration-300" 
+
+          <Button
+            type="submit"
+            variant="aurora"
+            className="w-full h-12 text-xs uppercase tracking-wider mt-2"
             disabled={loading}
           >
-            {loading ? 'Sending OTP...' : 'Send Reset OTP'}
+            {loading ? 'Sending Code...' : 'Send Reset Code'}
           </Button>
         </form>
 
-        <div className="text-center text-sm text-muted-foreground">
-          Remember your password?{" "}
-          <Link to="/login" className="font-medium text-primary hover:text-primary/80 hover:underline transition-colors duration-200">
-            Login
+        <div className="relative z-10 text-center text-xs text-slate-300/80 pt-2 border-t border-white/15">
+          Remember password?{" "}
+          <Link to="/login" className="font-bold text-cyan-300 hover:text-cyan-200 hover:underline">
+            Back to Login
           </Link>
         </div>
       </div>

@@ -1,30 +1,53 @@
 import React from 'react';
-import { Bold, Italic, Strikethrough, Pilcrow, Heading1, Heading2, Heading3, Indent as IndentIcon, Outdent as OutdentIcon, AlignLeft, AlignCenter, AlignRight, AlignJustify, Underline as UnderlineIcon, Minus } from 'lucide-react';
+import {
+  Bold,
+  Italic,
+  Strikethrough,
+  Pilcrow,
+  Heading1,
+  Heading2,
+  Heading3,
+  Indent as IndentIcon,
+  Outdent as OutdentIcon,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  Underline as UnderlineIcon,
+  Minus
+} from 'lucide-react';
+import { Button } from '@/Components/ui/button';
+
+const ToolButton = ({ onClick, isActive, disabled, title, icon }) => {
+  const IconComp = icon;
+  return (
+    <Button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      variant="glass-circle"
+      size="icon-sm"
+      className={`w-8 h-8 p-1.5 ${
+        isActive
+          ? 'bg-cyan-400/25 border-cyan-300/80 text-cyan-200 shadow-[0_0_16px_rgba(0,212,255,0.45),inset_0_2px_2px_rgba(255,255,255,0.85)] scale-105'
+          : 'text-slate-300 hover:text-white'
+      }`}
+      title={title}
+    >
+      <IconComp className="w-3.5 h-3.5" />
+    </Button>
+  );
+};
+
+const Divider = () => <div className="w-px h-5 bg-white/20 mx-1 rounded-full" />;
 
 const MenuBar = ({ editor }) => {
   if (!editor) {
     return null;
   }
 
-  const ToolButton = ({ onClick, isActive, disabled, title, icon: IconComponent /* eslint-disable-line no-unused-vars */ }) => (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`p-2 rounded-lg transition-all duration-200 ${
-        isActive 
-          ? 'bg-gradient-to-r from-primary to-secondary text-foreground shadow-lg scale-105' 
-          : 'text-muted-foreground hover:bg-foreground/10 hover:text-foreground hover:scale-105'
-      } disabled:opacity-40 disabled:cursor-not-allowed`}
-      title={title}
-    >
-      <IconComponent className="w-4 h-4" />
-    </button>
-  );
-
-  const Divider = () => <div className="w-px h-6 bg-border/10 mx-1"></div>;
-
   return (
-    <div className="flex items-center gap-1 p-3 bg-gradient-to-r from-card to-card border-b border-border/10 rounded-t-xl backdrop-blur-xl flex-wrap">
+    <div className="flex items-center gap-1.5 p-3 border-b border-white/15 bg-white/[0.06] backdrop-blur-2xl flex-wrap">
       <ToolButton onClick={() => editor.chain().focus().toggleBold().run()} disabled={!editor.can().chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} title="Bold (Ctrl+B)" icon={Bold} />
       <ToolButton onClick={() => editor.chain().focus().toggleItalic().run()} disabled={!editor.can().chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} title="Italic (Ctrl+I)" icon={Italic} />
       <ToolButton onClick={() => editor.chain().focus().toggleUnderline().run()} disabled={!editor.can().chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')} title="Underline (Ctrl+U)" icon={UnderlineIcon} />

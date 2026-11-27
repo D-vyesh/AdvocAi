@@ -3,8 +3,10 @@ import axios from "../api/axios";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/Components/ui/Card";
 import { Button } from "@/Components/ui/button";
+import { Input } from "@/Components/ui/Input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/Components/ui/Select";
+import { Shield, UserPlus, UserCheck } from "lucide-react";
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -16,7 +18,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (!user) return;
     if (user.role !== "admin") {
-      toast.error("This dashboard is only available to admin users.");
+      toast.error("Admin credentials required.");
       navigate("/");
     }
   }, [user, navigate]);
@@ -24,7 +26,7 @@ const AdminDashboard = () => {
   const handlePromoteUser = async (e) => {
     e.preventDefault();
     if (!promoteEmail) {
-      toast.error("Please enter an email to promote.");
+      toast.error("Please enter user email.");
       return;
     }
     try {
@@ -32,12 +34,12 @@ const AdminDashboard = () => {
         email: promoteEmail,
         role: promoteRole,
       });
-      toast.success(response.data?.message || "User promoted successfully.");
+      toast.success(response.data?.message || "User role updated.");
       setPromoteEmail("");
       setPromoteRole("admin");
     } catch (err) {
       console.error("Failed to promote user:", err);
-      toast.error(err.response?.data?.error || "Unable to promote user.");
+      toast.error(err.response?.data?.error || "Unable to update role.");
     }
   };
 
@@ -45,27 +47,16 @@ const AdminDashboard = () => {
     e.preventDefault();
     const { email, username, password } = newAdmin;
     if (!email || !username || !password) {
-      toast.error("Email, username, and password are required.");
+      toast.error("Email, username, and password required.");
       return;
     }
     try {
       const response = await axios.post("api/auth/admin/users/create-admin/", newAdmin);
-      toast.success(response.data?.message || "Admin user created.");
+      toast.success(response.data?.message || "Admin user provisioned.");
       setNewAdmin({ email: "", username: "", name: "", password: "" });
     } catch (err) {
-      console.error("Failed to create admin user:", err);
-      const data = err.response?.data;
-      let msg = data?.error || "Unable to create admin user.";
-      if (typeof data === "object" && !data.error) {
-        const firstKey = Object.keys(data)[0];
-        const firstVal = data[firstKey];
-        if (Array.isArray(firstVal) && firstVal.length > 0) {
-          msg = firstVal[0];
-        } else if (typeof firstVal === "string") {
-          msg = firstVal;
-        }
-      }
-      toast.error(msg);
+      console.error("Failed to create admin:", err);
+      toast.error(err.response?.data?.error || "Failed to create administrator.");
     }
   };
 
@@ -74,104 +65,117 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="container mx-auto py-10 animate-fade-in space-y-8 max-w-4xl">
-      <Card className="bg-card border-border backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl text-foreground">Admin Dashboard</CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Manage admin users and permissions.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+    <div className="min-h-[calc(100vh-5.5rem)] px-4 sm:px-6 lg:px-8 py-8 max-w-5xl mx-auto space-y-8 animate-fade-in">
+
+      {/* Header Card */}
+      <div className="glass-panel glass-reactive p-8 rounded-[2.5rem] border border-white/25 shadow-fluffy flex items-center gap-4">
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="glass-circle w-14 h-14 shadow-glass-glow flex-shrink-0">
+            <Shield className="w-7 h-7 text-cyan-300" />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight font-display">Admin Console</h1>
+            <p className="text-xs sm:text-sm text-slate-300/80">Manage administrative privileges and user escalations</p>
+          </div>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-foreground text-lg">Promote User</CardTitle>
-            <CardDescription className="text-muted-foreground">
-              Promote an existing user to admin or client role.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-3" onSubmit={handlePromoteUser}>
-              <input
+
+        {/* Card 1: Role Promotion */}
+        <div className="glass-panel glass-reactive p-6 sm:p-8 rounded-[2.25rem] border border-white/25 shadow-fluffy space-y-5">
+          <div className="relative z-10 flex items-center gap-3">
+            <div className="glass-circle w-11 h-11">
+              <UserCheck className="w-5 h-5 text-amber-300" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white font-display">Promote Member</h3>
+              <p className="text-xs text-slate-300/80">Elevate an existing client account</p>
+            </div>
+          </div>
+
+          <form className="relative z-10 space-y-4" onSubmit={handlePromoteUser}>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-200 pl-1">Target Email</label>
+              <Input
                 type="email"
                 value={promoteEmail}
                 onChange={(e) => setPromoteEmail(e.target.value)}
-                placeholder="User email"
-                className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
+                placeholder="colleague@domain.com"
+                className="h-11 px-4 text-xs rounded-full"
               />
-              <select
-                value={promoteRole}
-                onChange={(e) => setPromoteRole(e.target.value)}
-                className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
-              >
-                <option value="admin">Admin</option>
-                <option value="client">Client</option>
-              </select>
-              <Button type="submit" className="w-full">
-                Promote
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+            </div>
 
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-foreground text-lg">Create Admin User</CardTitle>
-            <CardDescription className="text-muted-foreground">
-              Add a new administrator account.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-3" onSubmit={handleCreateAdmin}>
-              <input
-                type="email"
-                value={newAdmin.email}
-                onChange={(e) =>
-                  setNewAdmin((prev) => ({ ...prev, email: e.target.value }))
-                }
-                placeholder="Email"
-                className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
-              />
-              <input
-                type="text"
-                value={newAdmin.username}
-                onChange={(e) =>
-                  setNewAdmin((prev) => ({ ...prev, username: e.target.value }))
-                }
-                placeholder="Username"
-                className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
-              />
-              <input
-                type="text"
-                value={newAdmin.name}
-                onChange={(e) =>
-                  setNewAdmin((prev) => ({ ...prev, name: e.target.value }))
-                }
-                placeholder="Full name (optional)"
-                className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
-              />
-              <input
-                type="password"
-                value={newAdmin.password}
-                onChange={(e) =>
-                  setNewAdmin((prev) => ({ ...prev, password: e.target.value }))
-                }
-                placeholder="Password"
-                className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
-              />
-              <Button type="submit" className="w-full">
-                Create Admin
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-200 pl-1">Assign Role</label>
+              <Select value={promoteRole} onValueChange={setPromoteRole}>
+                <SelectTrigger className="h-11 px-4 text-xs rounded-full">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Administrator</SelectItem>
+                  <SelectItem value="client">Standard Client</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button type="submit" variant="aurora" className="w-full h-11 text-xs">
+              Update Role
+            </Button>
+          </form>
+        </div>
+
+        {/* Card 2: Create Admin */}
+        <div className="glass-panel glass-reactive p-6 sm:p-8 rounded-[2.25rem] border border-white/25 shadow-fluffy space-y-5">
+          <div className="relative z-10 flex items-center gap-3">
+            <div className="glass-circle w-11 h-11">
+              <UserPlus className="w-5 h-5 text-cyan-300" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white font-display">Provision Admin</h3>
+              <p className="text-xs text-slate-300/80">Directly register a new administrator</p>
+            </div>
+          </div>
+
+          <form className="relative z-10 space-y-3.5" onSubmit={handleCreateAdmin}>
+            <Input
+              type="email"
+              value={newAdmin.email}
+              onChange={(e) => setNewAdmin((prev) => ({ ...prev, email: e.target.value }))}
+              placeholder="Email address"
+              className="h-10 px-4 text-xs rounded-full"
+            />
+            <Input
+              type="text"
+              value={newAdmin.username}
+              onChange={(e) => setNewAdmin((prev) => ({ ...prev, username: e.target.value }))}
+              placeholder="Username"
+              className="h-10 px-4 text-xs rounded-full"
+            />
+            <Input
+              type="text"
+              value={newAdmin.name}
+              onChange={(e) => setNewAdmin((prev) => ({ ...prev, name: e.target.value }))}
+              placeholder="Full name (optional)"
+              className="h-10 px-4 text-xs rounded-full"
+            />
+            <Input
+              type="password"
+              value={newAdmin.password}
+              onChange={(e) => setNewAdmin((prev) => ({ ...prev, password: e.target.value }))}
+              placeholder="Secure password"
+              className="h-10 px-4 text-xs rounded-full"
+            />
+
+            <Button type="submit" variant="default" className="w-full h-11 text-xs mt-2">
+              Provision Account
+            </Button>
+          </form>
+        </div>
+
       </div>
     </div>
   );
 };
 
 export default AdminDashboard;
-
-

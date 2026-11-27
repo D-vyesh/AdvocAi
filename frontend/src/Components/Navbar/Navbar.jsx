@@ -1,14 +1,20 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/Button";
-import { User, LogOut, Menu, X } from "lucide-react";
-import { useAuth } from '../../context/AuthContext'; // Import useAuth
+import { Link, useLocation } from "react-router-dom";
+import { Button } from "@/Components/ui/button";
+import { User, LogOut, Menu, X, Sparkles, ChevronRight, Droplets } from "lucide-react";
+import { useAuth } from '../../context/AuthContext';
 
 export default function Navbar() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [cursorFxOn, setCursorFxOn] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const saved = localStorage.getItem("advocai-liquid-cursor");
+    return saved === null ? true : saved === "true";
+  });
   const profileMenuRef = useRef(null);
-  const { user, isAuthenticated, logout } = useAuth(); // Use AuthContext
+  const { user, isAuthenticated, logout } = useAuth();
+  const location = useLocation();
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -23,137 +29,202 @@ export default function Navbar() {
     }
   }, [showProfileMenu]);
 
+  const toggleCursorFx = () => {
+    const next = !cursorFxOn;
+    setCursorFxOn(next);
+    window.dispatchEvent(new CustomEvent("advocai:toggle-cursor", { detail: next }));
+  };
+
   const navLinks = [
     { to: "/", label: "Home" },
-    { to: "/document-analyser", label: "Document Analyzer" },
-    { to: "/document-creation", label: "Document Generator" },
-    { to: "/my-documents", label: "My Documents", requiresAuth: true },
+    { to: "/document-analyser", label: "Analyzer" },
+    { to: "/document-creation", label: "Generator" },
+    { to: "/my-documents", label: "Documents", requiresAuth: true },
   ];
 
   if (isAuthenticated && user?.role === 'admin') {
-    navLinks.push({ to: "/admin-dashboard", label: "Admin Dashboard", requiresAuth: true });
+    navLinks.push({ to: "/admin-dashboard", label: "Admin", requiresAuth: true });
   }
 
   return (
-    <nav className="bg-background/80 backdrop-blur-md sticky top-0 z-50 border-b py-4 border-border shadow-lg shadow-black/20 h-[var(--navbar-height)]">
-      <div className="container mx-auto px-5 h-full">
-        <div className="flex items-center justify-between h-17">
-          <Link to="/" className="text-3xl font-extrabold text-white hover:text-primary transition-colors duration-200 bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-            AdvocAI
+    <header className="sticky top-0 z-50 w-full px-4 sm:px-6 lg:px-8 pt-3.5 pb-2 pointer-events-none">
+      {/* Floating Fluffy Liquid Glass Dock */}
+      <div className="max-w-6xl mx-auto glass-dock glass-reactive pointer-events-auto px-4 sm:px-6 py-2.5 transition-all duration-300">
+        <div className="relative z-10 flex items-center justify-between gap-3">
+          {/* Logo with Specular Dewdrop Brand Orb */}
+          <Link
+            to="/"
+            className="flex items-center gap-2.5 group focus:outline-none cursor-glass-target"
+          >
+            <div className="glass-circle w-10 h-10 p-1.5 shadow-[inset_0_2px_3px_rgba(255,255,255,0.92),0_6px_18px_rgba(0,212,255,0.38)] group-hover:scale-110 transition-transform duration-300 ease-fluffy">
+              <Sparkles className="w-5 h-5 text-cyan-300 group-hover:rotate-12 transition-transform duration-300" />
+            </div>
+            <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-sky-100 to-cyan-300 bg-clip-text text-transparent font-display">
+              Advoc<span className="text-cyan-400">AI</span>
+            </span>
           </Link>
-          
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-2">
-            {navLinks.map((link, index) => (
-              ((!link.requiresAuth) || isAuthenticated) && (
-                <Link 
-                  to={link.to} 
-                  key={index} 
-                  className="text-muted-foreground hover:text-foreground px-4 py-2 rounded-lg hover:bg-foreground/5 transition-all duration-200 relative group"
+
+          {/* Desktop Navigation - Plush Cushion Segmented Pills */}
+          <nav className="hidden md:flex items-center gap-1.5 p-1.5 rounded-full bg-white/[0.06] border border-white/15 backdrop-blur-xl shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]">
+            {navLinks.map((link, index) => {
+              if (link.requiresAuth && !isAuthenticated) return null;
+              const isActive = location.pathname === link.to;
+              return (
+                <Link
+                  key={index}
+                  to={link.to}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all duration-300 ease-fluffy ${
+                    isActive
+                      ? "bg-gradient-to-b from-white/30 to-cyan-400/15 text-white border border-white/45 shadow-[inset_0_2px_2px_rgba(255,255,255,0.85),0_6px_16px_rgba(0,212,255,0.28)] scale-[1.03]"
+                      : "text-slate-300 hover:text-white hover:bg-white/12 hover:-translate-y-0.5"
+                  }`}
                 >
                   {link.label}
-                  <span className="absolute bottom-1 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
                 </Link>
-              )
-            ))}
-          </div>
+              );
+            })}
+          </nav>
 
-          {/* Desktop Auth Section */}
-          <div className="hidden md:flex items-center space-x-4">
+          {/* Desktop Controls */}
+          <div className="hidden md:flex items-center gap-2.5">
+            {/* Liquid Glass Cursor Lens Quick Toggle */}
+            <Button
+              type="button"
+              onClick={toggleCursorFx}
+              variant="glass-circle"
+              size="icon-sm"
+              className={`w-9 h-9 ${
+                cursorFxOn
+                  ? "text-cyan-300 border-cyan-300/50 shadow-[0_0_16px_rgba(0,212,255,0.32)]"
+                  : "text-slate-400 opacity-75"
+              }`}
+              title={cursorFxOn ? "Liquid Glass Cursor: ON (click to toggle)" : "Liquid Glass Cursor: OFF (click to toggle)"}
+              aria-label="Toggle Liquid Glass Cursor"
+            >
+              <Droplets className="w-4 h-4" />
+            </Button>
+
             {isAuthenticated ? (
-              <>
-                <Link to="/profile">
-                  <Button variant="ghost" className="hover:bg-foreground/5 rounded-full">
-                    {user && user.profile_picture ? (
-                      <img src={user.profile_picture} alt="Profile" className="w-9 h-8 rounded-full border-2 border-primary/50 hover:border-primary transition-colors" />
-                    ) : (
-                      <div className="w-9 h-8 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30">
-                        <User size={17} className="text-primary" />
-                      </div>
-                    )}
-                  </Button>
-                </Link>
-                <Button 
-                  onClick={logout} 
-                  variant="outline" 
-                  size="sm"
-                  className="border-border hover:border-destructive hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
+              <div className="flex items-center gap-2.5" ref={profileMenuRef}>
+                <Link
+                  to="/profile"
+                  className="glass-circle w-10 h-10 p-0.5 hover:scale-105 transition-transform"
+                  title="Your Profile"
                 >
-                  <LogOut size={15} className="mr-2" />
-                  Logout
+                  {user && user.profile_picture ? (
+                    <img
+                      src={user.profile_picture}
+                      alt="Profile"
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <User size={18} className="text-cyan-300" />
+                  )}
+                </Link>
+
+                <Button
+                  onClick={logout}
+                  variant="destructive"
+                  size="sm"
+                  className="h-9 px-4 text-xs"
+                >
+                  <LogOut size={13} />
+                  <span>Logout</span>
                 </Button>
-              </>
+              </div>
             ) : (
-              <Link to="/login">
-                <Button className="bg-gradient-to-r from-primary to-secondary hover:from-primary hover:to-secondary text-white shadow-md shadow-primary/30 hover:shadow-lg shadow-primary/40 transition-all duration-200">
-                  Login
-                </Button>
-              </Link>
+              <Button
+                asChild
+                variant="aurora"
+                size="sm"
+                className="h-9 px-5 text-xs"
+              >
+                <Link to="/login">
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
+                  <span>Sign In</span>
+                </Link>
+              </Button>
             )}
           </div>
 
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center">
-            <button 
+            <Button
+              type="button"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-3 rounded-lg hover:bg-foreground/10 transition-colors duration-200 text-muted-foreground hover:text-foreground"
+              variant="glass-circle"
+              size="icon-sm"
+              className="w-9 h-9 text-slate-100"
               aria-label="Toggle menu"
             >
-              <Menu size={23} />
-            </button>
+              {isMenuOpen ? <X size={18} /> : <Menu size={18} />}
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
-      <div 
-        className={`md:hidden fixed top-0 right-0 bottom-0 w-3/4 max-w-sm bg-background/95 backdrop-blur-xl z-40 flex flex-col py-5 px-6 transform transition-transform duration-300 ease-in-out ${
-          isMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        <button
-          onClick={() => setIsMenuOpen(false)}
-          className="absolute top-5 right-5 p-3 rounded-lg hover:bg-foreground/10 transition-colors duration-200 text-foreground"
-        >
-          <X size={24} />
-        </button>
-        <div className="flex flex-col items-start space-y-6 mt-16"> {/* Adjusted for better spacing */}
-          {navLinks.map((link, index) => (
-            ((!link.requiresAuth) || isAuthenticated) && (
-              <Link 
-                to={link.to} 
-                key={index} 
-                className="text-2xl font-bold text-foreground hover:text-primary transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {link.label}
-              </Link>
-            )
-          ))}
-          {isAuthenticated ? (
-            <>
-              <Link to="/profile" className="text-2xl font-bold text-foreground hover:text-primary transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
-                Profile
-              </Link>
-              <Button 
-                onClick={() => { logout(); setIsMenuOpen(false); }} 
-                variant="outline" 
-                size="lg"
-                className="border-border hover:border-destructive hover:bg-destructive/10 hover:text-destructive transition-all duration-200 text-2xl font-bold w-full justify-start" // Added w-full justify-start
-              >
-                <LogOut size={20} className="mr-3" />
-                Logout
-              </Button>
-            </>
-          ) : (
-            <Link to="/login" className="text-2xl font-bold text-foreground hover:text-primary transition-colors duration-200 w-full" onClick={() => setIsMenuOpen(false)}>
-              <Button size="lg" className="bg-gradient-to-r from-primary to-secondary hover:from-primary hover:to-secondary text-white shadow-md shadow-primary/30 hover:shadow-lg shadow-primary/40 transition-all duration-200 text-2xl font-bold w-full justify-start"> {/* Added w-full justify-start */}
-                Login
-              </Button>
-            </Link>
-          )}
+      {/* Mobile Drawer (Ultra Frosted Fluffy Glass Panel) */}
+      {isMenuOpen && (
+        <div className="md:hidden fixed inset-x-4 top-20 z-50 glass-panel glass-reactive p-6 shadow-2xl animate-fade-in pointer-events-auto border border-white/30">
+          <div className="relative z-10 flex flex-col space-y-2.5">
+            {navLinks.map((link, index) => {
+              if (link.requiresAuth && !isAuthenticated) return null;
+              const isActive = location.pathname === link.to;
+              return (
+                <Link
+                  key={index}
+                  to={link.to}
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
+                    isActive
+                      ? "bg-white/25 text-white border border-white/40 shadow-[inset_0_2px_2px_rgba(255,255,255,0.75)]"
+                      : "text-slate-200 hover:bg-white/12"
+                  }`}
+                >
+                  <span>{link.label}</span>
+                  <ChevronRight size={16} className="text-cyan-300" />
+                </Link>
+              );
+            })}
+
+            <div className="pt-4 mt-2 border-t border-white/15">
+              {isAuthenticated ? (
+                <div className="space-y-3">
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-slate-200 hover:bg-white/10"
+                  >
+                    <div className="glass-circle w-8 h-8">
+                      <User size={16} className="text-cyan-300" />
+                    </div>
+                    <span className="font-semibold text-sm">Account Settings</span>
+                  </Link>
+
+                  <Button
+                    onClick={() => {
+                      logout();
+                      setIsMenuOpen(false);
+                    }}
+                    variant="destructive"
+                    className="w-full h-11 text-sm"
+                  >
+                    <LogOut size={16} />
+                    <span>Logout</span>
+                  </Button>
+                </div>
+              ) : (
+                <Button asChild variant="aurora" className="w-full h-11 text-sm">
+                  <Link to="/login" onClick={() => setIsMenuOpen(false)}>
+                    <Sparkles className="w-4 h-4 text-cyan-300" />
+                    <span>Sign In</span>
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-    </nav>
+      )}
+    </header>
   );
 }

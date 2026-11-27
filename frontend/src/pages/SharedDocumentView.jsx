@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useLocation } from 'react-router-dom'; // Import useLocation
+import { useParams, useLocation } from 'react-router-dom';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';
 import DOMPurify from 'dompurify';
-import { Button } from "@/Components/ui/Button";
-import { FileText, Download, MessageCircle, X, User, Edit, History } from 'lucide-react'; // Import History icon
+import { Button } from "@/Components/ui/button";
+import { FileText, Download, MessageCircle, X, Edit, History, PenTool, Sparkles } from 'lucide-react';
 import CommentList from '../Components/Comments/CommentList';
 import { saveAs } from 'file-saver';
-import { useEditor, EditorContent, Editor } from '@tiptap/react'; // Import Editor
+import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from 'tiptap-markdown';
 import { Indent } from '../lib/tiptap-extensions/indent';
@@ -16,9 +16,8 @@ import Underline from '@tiptap/extension-underline';
 import Image from '@tiptap/extension-image';
 import MenuBar from '../Components/MenuBar';
 import SignatureModal from '../Components/SignatureModal';
-import VersionsSidebar from '../Components/VersionsSidebar'; // Import VersionsSidebar
+import VersionsSidebar from '../Components/VersionsSidebar';
 
-// Helper function to convert Markdown to HTML using a headless Tiptap editor
 const convertMarkdownToHtml = (markdownContent) => {
   if (!markdownContent) return '';
   const tempEditor = new Editor({
@@ -39,9 +38,9 @@ const convertMarkdownToHtml = (markdownContent) => {
 
 const SharedDocumentView = () => {
   const { id: mongoConversationId } = useParams();
-  const location = useLocation(); // Initialize useLocation
+  const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const versionToLoad = queryParams.get('version'); // Get version from query params
+  const versionToLoad = queryParams.get('version');
 
   const [title, setTitle] = useState('Loading Document...');
   const [documentContent, setDocumentContent] = useState('');
@@ -51,8 +50,8 @@ const SharedDocumentView = () => {
   const [canEdit, setCanEdit] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
-  const [isVersionsSidebarOpen, setIsVersionsSidebarOpen] = useState(false); // New state for versions sidebar
-  const [currentVersion, setCurrentVersion] = useState(null); // New state for current version
+  const [isVersionsSidebarOpen, setIsVersionsSidebarOpen] = useState(false);
+  const [currentVersion, setCurrentVersion] = useState(null);
 
   const editor = useEditor({
     extensions: [
@@ -70,7 +69,7 @@ const SharedDocumentView = () => {
     },
     editorProps: {
       attributes: {
-        class: 'markdown-preview p-8 bg-card/60 border border-border/10 rounded-b-2xl backdrop-blur-xl text-foreground overflow-hidden',
+        class: 'markdown-preview p-8 bg-transparent text-slate-100 overflow-hidden outline-none',
       },
     },
   });
@@ -100,18 +99,16 @@ const SharedDocumentView = () => {
         let versionToSet = null;
 
         if (versionToLoad) {
-          // Fetch specific version content
           const versionResponse = await axios.get(`api/documents/conversations/${mongoConversationId}/versions/${versionToLoad}/content/`);
           contentToLoad = versionResponse.data.content;
           versionToSet = parseInt(versionToLoad);
           toast.success(`Loaded version ${versionToLoad}`);
         } else {
-          // Load latest version
           const latestVersion = conversation.document_versions[conversation.document_versions.length - 1];
           contentToLoad = latestVersion.content;
           versionToSet = latestVersion.version_number;
         }
-        const htmlContent = convertMarkdownToHtml(contentToLoad); // Convert Markdown to HTML
+        const htmlContent = convertMarkdownToHtml(contentToLoad);
         setDocumentContent(htmlContent);
         setCurrentVersion(versionToSet);
       } else {
@@ -120,18 +117,18 @@ const SharedDocumentView = () => {
       }
     } catch (err) {
       console.error('Error fetching document:', err);
-      setError('Failed to load document. It might not exist or you do not have access.');
+      setError('Failed to load document. It might not exist or you lack permission.');
       toast.error('Failed to load document.');
     } finally {
       setLoading(false);
     }
-  }, [mongoConversationId, versionToLoad]); // Add versionToLoad to dependencies
+  }, [mongoConversationId, versionToLoad]);
 
   useEffect(() => {
     if (mongoConversationId) {
       fetchDocument();
     }
-  }, [mongoConversationId, versionToLoad, fetchDocument]); // Add versionToLoad to dependencies
+  }, [mongoConversationId, versionToLoad, fetchDocument]);
 
   const handleDownloadPdf = async () => {
     if (!mongoConversationId) {
@@ -139,8 +136,7 @@ const SharedDocumentView = () => {
       return;
     }
     try {
-      // If a specific version is loaded, download that version. Otherwise, download the latest.
-      const downloadUrl = currentVersion 
+      const downloadUrl = currentVersion
         ? `api/utils/conversations/${mongoConversationId}/download-version-pdf/${currentVersion}/`
         : `api/utils/conversations/${mongoConversationId}/download-latest-pdf/`;
 
@@ -148,7 +144,7 @@ const SharedDocumentView = () => {
         responseType: 'blob',
       });
       saveAs(response.data, `${title || 'shared_document'}_v${currentVersion || 'latest'}.pdf`);
-      toast.success('PDF downloaded successfully!');
+      toast.success('PDF downloaded!');
     } catch (err) {
       console.error('Error downloading PDF:', err);
       toast.error(`Failed to download PDF: ${err.message}`);
@@ -163,10 +159,9 @@ const SharedDocumentView = () => {
         new_document_content: editor.getHTML(),
         notes: 'Updated from shared link'
       });
-      toast.success('Document saved successfully!');
+      toast.success('Document saved!');
       setIsEditMode(false);
-      // After saving, re-fetch the document to get the new latest version
-      fetchDocument(); 
+      fetchDocument();
     } catch (err) {
       console.error('Error saving document:', err);
       toast.error('Failed to save document.');
@@ -188,139 +183,164 @@ const SharedDocumentView = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-background text-foreground">
-        <p>Loading document...</p>
+      <div className="flex justify-center items-center min-h-[calc(100vh-5.5rem)]">
+        <div className="glass-panel p-8 rounded-[2rem] text-center">
+          <Sparkles className="w-8 h-8 text-cyan-400 animate-spin mx-auto mb-2" />
+          <p className="text-xs text-slate-300">Decrypting document...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-background text-destructive">
-        <p>{error}</p>
+      <div className="flex justify-center items-center min-h-[calc(100vh-5.5rem)] p-4">
+        <div className="glass-panel p-8 rounded-[2rem] text-center max-w-sm">
+          <p className="text-rose-400 text-sm font-semibold">{error}</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex relative min-h-screen bg-background text-foreground">
-      {/* Header Section - Relative positioning so it doesn't conflict with navbar */}
-      <div className="w-full">
-        {/* Header Content */}
-        <div className="bg-gradient-to-b from-card/80 to-card/40 backdrop-blur-xl border-b border-border/10 px-8 py-6 mb-8">
-          <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <h1 className="text-4xl font-bold text-primary truncate">{title}</h1>
+    <div className="flex h-[calc(100vh-5.5rem)] px-4 sm:px-6 lg:px-8 pb-4 max-w-7xl mx-auto gap-4 relative">
+      <div className="flex-1 flex flex-col h-full min-w-0">
+
+        {/* Top Control Bar */}
+        <div className="glass-panel glass-reactive p-4 px-6 rounded-[1.75rem] border border-white/25 mb-3 flex items-center justify-between flex-shrink-0 shadow-glass">
+          <div className="relative z-10 min-w-0 flex-1 flex items-center gap-3">
+            <div className="glass-circle w-9 h-9 flex-shrink-0">
+              <FileText className="w-4 h-4 text-cyan-300" />
             </div>
-            <div className="flex items-center gap-3 flex-shrink-0">
-              {canEdit && !isEditMode && (
-                <Button onClick={() => setIsEditMode(true)}>
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit
-                </Button>
-              )}
-              {isEditMode && (
-                <Button onClick={handleSave}>Save</Button>
-              )}
-              {canEdit && (
-                <Button onClick={() => {
+            <h1 className="text-base sm:text-xl font-extrabold text-white truncate font-display">
+              {title}
+            </h1>
+          </div>
+
+          <div className="relative z-10 flex items-center gap-2 flex-shrink-0">
+            {canEdit && !isEditMode && (
+              <Button onClick={() => setIsEditMode(true)} variant="glass" size="sm" className="h-8 px-3.5 text-xs">
+                <Edit className="w-3.5 h-3.5 text-cyan-300" />
+                <span>Edit</span>
+              </Button>
+            )}
+
+            {isEditMode && (
+              <Button onClick={handleSave} variant="emerald" size="sm" className="h-8 px-4 text-xs">
+                Save
+              </Button>
+            )}
+
+            {canEdit && (
+              <Button
+                onClick={() => {
                   setIsEditMode(true);
                   setShowSignatureModal(true);
-                }} className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all">
-                  <Edit className="w-4 h-4 mr-2" />
-                  Add Signature
-                </Button>
-              )}
-              <Button
-                onClick={handleDownloadPdf}
-                className="bg-gradient-to-r from-accent to-accent text-foreground rounded-lg shadow-lg shadow-accent/30 hover:shadow-accent/50 transition-all"
+                }}
+                variant="emerald"
+                size="sm"
+                className="h-8 px-3.5 text-xs"
               >
-                <Download className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Download PDF</span>
-                <span className="sm:hidden">PDF</span>
+                <PenTool className="w-3.5 h-3.5" />
+                <span>Sign</span>
               </Button>
-              {mongoConversationId && ( // Only show versions button if document exists
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => {
-                    setIsVersionsSidebarOpen(!isVersionsSidebarOpen);
-                    setIsCommentsSidebarOpen(false); // Close comments sidebar if versions opens
-                  }}
-                  className="border-border/20 bg-card/40 hover:bg-card/60 hover:border-border/30 text-muted-foreground rounded-lg backdrop-blur-sm transition-all relative"
-                  title="View Versions"
-                >
-                  <History className="w-5 h-5" />
-                </Button>
-              )}
+            )}
+
+            <Button
+              onClick={handleDownloadPdf}
+              variant="aurora"
+              size="sm"
+              className="h-8 px-3.5 text-xs"
+            >
+              <Download className="w-3.5 h-3.5 text-cyan-300" />
+              <span>PDF</span>
+            </Button>
+
+            {mongoConversationId && (
               <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setIsCommentsSidebarOpen(!isCommentsSidebarOpen)}
-                className="border-border/20 bg-card/40 hover:bg-card/60 hover:border-border/30 text-muted-foreground rounded-lg backdrop-blur-sm transition-all relative"
-                title="View Comments"
+                type="button"
+                onClick={() => {
+                  setIsVersionsSidebarOpen(!isVersionsSidebarOpen);
+                  setIsCommentsSidebarOpen(false);
+                }}
+                variant="glass-circle"
+                size="icon-sm"
+                className="w-8 h-8 text-slate-200 hover:text-white"
+                title="Versions"
               >
-                <MessageCircle className="w-5 h-5" />
+                <History className="w-4 h-4" />
               </Button>
-            </div>
+            )}
+
+            <Button
+              type="button"
+              onClick={() => setIsCommentsSidebarOpen(!isCommentsSidebarOpen)}
+              variant="glass-circle"
+              size="icon-sm"
+              className="w-8 h-8 text-slate-200 hover:text-white"
+              title="Comments"
+            >
+              <MessageCircle className="w-4 h-4" />
+            </Button>
           </div>
         </div>
 
-        {/* Main Content Area */}
-        <div className="flex px-8 gap-8 max-w-6xl mx-auto">
-          {/* Document View */}
-          <div className="flex-1 min-w-0">
+        {/* Editor or Content View */}
+        <div className="flex-1 glass-panel rounded-[2rem] border border-white/25 shadow-fluffy overflow-hidden flex flex-col min-h-0">
+          {isEditMode && (
+            <div className="relative z-10">
+              <MenuBar editor={editor} />
+            </div>
+          )}
+
+          <div className="relative z-10 flex-1 overflow-y-auto custom-scrollbar p-5 sm:p-7">
             {isEditMode ? (
-              <div className="flex-1 border border-border/10 rounded-t-xl overflow-hidden shadow-2xl flex flex-col">
-                <MenuBar editor={editor} />
-                <div className="flex-1 overflow-y-auto custom-scrollbar bg-card/60 p-8 markdown-preview text-foreground">
-                  <EditorContent editor={editor} />
-                </div>
-              </div>
+              <EditorContent editor={editor} />
             ) : (
-              <div className="overflow-y-auto custom-scrollbar bg-card/60 border border-border/10 rounded-2xl pt-8 markdown-preview shadow-2xl text-foreground min-h-full">
-                <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(documentContent) }} />
-              </div>
+              <div
+                className="markdown-preview max-w-4xl mx-auto"
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(documentContent) }}
+              />
             )}
           </div>
+        </div>
+      </div>
 
-          {/* Comments Sidebar - Responsive */}
-          <div
-            className={`transition-all duration-300 ${
-              isCommentsSidebarOpen 
-                ? 'w-80 opacity-100' 
-                : 'w-0 opacity-0 overflow-hidden'
-            }`}
-          >
-            <div className="bg-card/95 backdrop-blur-xl border border-border/10 rounded-2xl shadow-lg h-[calc(100vh-200px)] flex flex-col overflow-hidden">
-              <div className="flex justify-between items-center p-4 border-b border-border/10">
-                <h2 className="text-lg font-semibold text-foreground">Comments</h2>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => setIsCommentsSidebarOpen(false)}
-                  className="h-8 w-8"
-                >
-                  <X className="w-4 h-4 text-muted-foreground" />
-                </Button>
-              </div>
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
-                {mongoConversationId && <CommentList documentId={mongoConversationId} />}
-              </div>
+      {/* Right Drawer: Versions */}
+      {isVersionsSidebarOpen && (
+        <div className="w-80 h-full flex-shrink-0 z-30 animate-fade-in">
+          <VersionsSidebar
+            conversationId={mongoConversationId}
+            onSelectVersion={handleSelectVersion}
+            onClose={() => setIsVersionsSidebarOpen(false)}
+            currentVersion={currentVersion}
+          />
+        </div>
+      )}
+
+      {/* Right Drawer: Comments */}
+      {isCommentsSidebarOpen && (
+        <div className="w-80 h-full flex-shrink-0 z-30 animate-fade-in">
+          <div className="glass-panel glass-reactive h-full rounded-[2rem] border border-white/25 p-4 shadow-fluffy flex flex-col">
+            <div className="relative z-10 flex items-center justify-between pb-3 border-b border-white/15">
+              <h3 className="text-sm font-bold text-white font-display">Collaborator Discussion</h3>
+              <Button
+                type="button"
+                onClick={() => setIsCommentsSidebarOpen(false)}
+                variant="glass-circle"
+                size="icon-sm"
+                className="w-7 h-7 text-slate-300 hover:text-white"
+              >
+                <X size={15} />
+              </Button>
+            </div>
+            <div className="relative z-10 flex-1 overflow-y-auto custom-scrollbar pt-3">
+              <CommentList documentId={mongoConversationId} />
             </div>
           </div>
         </div>
-      </div>
-      {/* Right Sidebar - Versions */}
-      <div className={`${isVersionsSidebarOpen ? 'translate-x-0 w-80 opacity-100' : 'translate-x-full max-w-0 opacity-0 pointer-events-none'} transition-all duration-300 bg-gradient-to-b from-card/95 to-card/95 backdrop-blur-xl border-l border-border/10 flex flex-col absolute right-0 z-20 overflow-hidden h-full`}>
-        <VersionsSidebar
-          conversationId={mongoConversationId}
-          onSelectVersion={handleSelectVersion}
-          onClose={() => setIsVersionsSidebarOpen(false)}
-          currentVersion={currentVersion}
-          // onDeleteVersion is not passed as shared view should not allow deleting versions
-        />
-      </div>
+      )}
+
       {showSignatureModal && (
         <SignatureModal
           onClose={() => setShowSignatureModal(false)}
@@ -330,7 +350,6 @@ const SharedDocumentView = () => {
               const newContentHtml = convertMarkdownToHtml(newContentMarkdown);
               editor.commands.setContent(newContentHtml);
               setDocumentContent(newContentHtml);
-              // Automatically save the document after adding a signature
               await handleSave();
             }
           }}

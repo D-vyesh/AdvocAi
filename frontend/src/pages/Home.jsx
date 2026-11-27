@@ -1,20 +1,177 @@
 "use client"
 
-import { ArrowRight, Shield, FileText, Zap, CheckCircle2, Sparkles, ArrowUpRight, X } from "lucide-react"
-import { Button } from "@/components/ui/Button"
+import {
+  ArrowRight,
+  Shield,
+  FileText,
+  Zap,
+  CheckCircle2,
+  Sparkles,
+  X,
+  PenTool,
+  AlertTriangle,
+  FileCheck,
+  Scale,
+  Award,
+} from "lucide-react"
+import { Button } from "@/Components/ui/button"
 import { Link } from "react-router-dom"
-import React, { useState, Suspense } from "react"
-import Navbar from "@/Components/Navbar/Navbar" // Import the new Navbar component
-
-import { useAuth } from '../context/AuthContext'; // Import useAuth
-
-const Subtle3DBackground = React.lazy(() => import("../Components/Subtle3DBackground.jsx"))
+import React, { useState, useRef } from "react"
+import { useAuth } from '../context/AuthContext'
 
 export default function Home() {
   const [selectedFeature, setSelectedFeature] = useState(null)
   const [activeDemo, setActiveDemo] = useState("analyzer")
-  const { isAuthenticated } = useAuth(); // Get isAuthenticated from AuthContext
-  // isLoggedIn, showProfileMenu, profileMenuRef, navigate, isAuthenticated, user, logout, handleProtectedNavClick are now handled by Navbar component
+  const { isAuthenticated } = useAuth()
+
+  // Interactive state for the Smart Contract Intelligence Console
+  const [activeContractIndex, setActiveContractIndex] = useState(0)
+  const [fixedClauses, setFixedClauses] = useState({})
+  const [isStamped, setIsStamped] = useState(false)
+  const [activeTool, setActiveTool] = useState("scanner")
+
+  // Mouse coordinate + subtle 3D cushion tilt state for the Sentinel HUD
+  const [mousePos, setMousePos] = useState({ x: 240, y: 180 })
+  const [hudTilt, setHudTilt] = useState({ rx: 0, ry: 0 })
+  const consoleRef = useRef(null)
+
+  const handleMouseMove = (e) => {
+    if (!consoleRef.current) return
+    const rect = consoleRef.current.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    setMousePos({ x, y })
+    const ry = ((x / rect.width) - 0.5) * 6
+    const rx = (0.5 - (y / rect.height)) * 6
+    setHudTilt({ rx, ry })
+  }
+
+  const handleMouseLeave = () => {
+    setHudTilt({ rx: 0, ry: 0 })
+  }
+
+  const contractsData = [
+    {
+      id: "msa",
+      name: "Enterprise MSA v2.4.pdf",
+      category: "Master Services",
+      score: "96%",
+      scoreLabel: "Optimal Protection",
+      auditHash: "0x9f4a...7c21 • Verified 2m ago",
+      clauses: [
+        {
+          id: "c1",
+          title: "§ 12.1 Mutual Indemnification",
+          status: "Verified",
+          statusColor: "emerald",
+          desc: "Liability mutualized & strictly capped to 12 months fees paid. Standard compliance met.",
+          fixable: false,
+        },
+        {
+          id: "c2",
+          title: "§ 8.3 Non-Compete Jurisdiction",
+          status: "Flagged Exposure",
+          statusColor: "amber",
+          desc: "36-month worldwide non-compete is overly restrictive under modern statutory guidelines.",
+          fixable: true,
+          fixText: "Restricted to 12 months within direct competitive industry segments.",
+        },
+        {
+          id: "c3",
+          title: "§ 4.2 Work-for-Hire Assignment",
+          status: "Protected",
+          statusColor: "cyan",
+          desc: "Irrevocable worldwide copyright and patent assignment with complete moral rights waiver.",
+          fixable: false,
+        },
+      ]
+    },
+    {
+      id: "nda",
+      name: "Mutual Bilateral NDA.pdf",
+      category: "Confidentiality",
+      score: "98%",
+      scoreLabel: "Bank-Grade Safe",
+      auditHash: "0x4b12...88e0 • Verified 5m ago",
+      clauses: [
+        {
+          id: "c1",
+          title: "§ 2.1 Definition of Trade Secrets",
+          status: "Verified",
+          statusColor: "emerald",
+          desc: "Clearly demarcates confidential proprietary data with standard carve-outs.",
+          fixable: false,
+        },
+        {
+          id: "c2",
+          title: "§ 5.2 Return or Destruction",
+          status: "Action Advised",
+          statusColor: "amber",
+          desc: "Missing mandatory 14-day written confirmation upon data purge request.",
+          fixable: true,
+          fixText: "Added 14-day certified written certificate of destruction requirement.",
+        },
+        {
+          id: "c3",
+          title: "§ 9.1 Governing Law & Venue",
+          status: "Protected",
+          statusColor: "cyan",
+          desc: "Delaware Chancery Court designation with expedited injunctive relief rights.",
+          fixable: false,
+        },
+      ]
+    },
+    {
+      id: "advisor",
+      name: "Strategic Advisor Deed.pdf",
+      category: "Equity & Advisory",
+      score: "94%",
+      scoreLabel: "Verified Terms",
+      auditHash: "0x7e01...31fa • Verified 9m ago",
+      clauses: [
+        {
+          id: "c1",
+          title: "§ 1.3 Advisory Service Commitments",
+          status: "Verified",
+          statusColor: "emerald",
+          desc: "5 hours monthly advisory guidance with quarterly milestone governance.",
+          fixable: false,
+        },
+        {
+          id: "c2",
+          title: "§ 3.4 Acceleration Upon Acquisition",
+          status: "Review Recommended",
+          statusColor: "amber",
+          desc: "Single-trigger acceleration requires board consent before liquidation events.",
+          fixable: true,
+          fixText: "Structured into double-trigger acceleration with good-reason protections.",
+        },
+        {
+          id: "c3",
+          title: "§ 6.1 Assignment of Inventions",
+          status: "Protected",
+          statusColor: "cyan",
+          desc: "Pre-existing advisor IP carved out; all new company advisory IP assigned.",
+          fixable: false,
+        },
+      ]
+    }
+  ]
+
+  const activeContract = contractsData[activeContractIndex]
+  const hasFixedClause = activeContract.clauses.some(
+    (c) => c.fixable && fixedClauses[`${activeContract.id}-${c.id}`]
+  )
+  const displayScore = hasFixedClause ? "99%" : activeContract.score
+  const displayScoreLabel = hasFixedClause ? "Risk Neutralized" : activeContract.scoreLabel
+
+  const toggleFixClause = (contractId, clauseId) => {
+    const key = `${contractId}-${clauseId}`
+    setFixedClauses((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }))
+  }
 
   const featureDetails = {
     analyzer: {
@@ -37,16 +194,6 @@ export default function Home() {
         "Download, edit, or regenerate instantly",
       ],
     },
-    timeline: {
-      title: "Document History Timeline",
-      description:
-        "Track every change made to your documents with a clear, chronological timeline and restore any previous version instantly.",
-      features: [
-        "Complete version history with timestamps",
-        "Instantly restore any previous version",
-        "Track changes made to your documents",
-      ],
-    },
     signature: {
       title: "Secure E-Signature",
       description:
@@ -57,728 +204,656 @@ export default function Home() {
         "Bank-level encryption and audit trail",
       ],
     },
-    "gen-track-sign": {
-      title: "Generate, Track & Sign",
-      description:
-        "Create custom documents with AI, track every version change in real-time, and collect legally binding e-signatures from multiple parties. Manage your entire document lifecycle in one platform.",
-      features: [
-        "AI-powered custom document creation",
-        "Complete version history with timestamps",
-        "Legally binding e-signatures & verification",
-        "Edit and regenerate with AI suggestions",
-      ],
-    },
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-hidden relative">
-      <div className="fixed inset-0 z-0 opacity-40 pointer-events-none">
-        <Suspense fallback={null}>
-          <Subtle3DBackground />
-        </Suspense>
-      </div>
-
+    <div className="min-h-screen text-slate-100 overflow-hidden relative">
       <div className="relative z-10">
 
-        <section className="relative overflow-hidden py-20 md:py-32">
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/20 rounded-full blur-3xl animate-float"></div>
-            <div
-              className="absolute -bottom-20 -left-40 w-80 h-80 bg-secondary/20 rounded-full blur-3xl animate-float"
-              style={{ animationDelay: "2s" }}
-            ></div>
-          </div>
+        {/* ================= HERO SECTION ================= */}
+        <section className="relative pt-10 pb-20 md:pt-16 md:pb-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-12 gap-12 lg:gap-10 items-center">
 
-          <div className="relative w-full px-4 sm:px-6 lg:px-8"> {/* Changed to w-full */}
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div className="space-y-6 z-10">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-secondary border border-primary/20 rounded-full">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-bold text-white">AI-Powered Legal Revolution</span>
-                </div>
-                <h1 className="text-5xl md:text-6xl font-black leading-tight text-balance">
-                  Master Legal Docs in
-                  <span className="block bg-gradient-to-r from-primary via-purple-500 to-secondary bg-clip-text text-transparent">
-                    Seconds, Not Hours
-                  </span>
-                </h1>
-                <p className="text-lg text-muted-foreground leading-relaxed max-w-lg">
-                  Stop struggling with confusing contracts. Our AI instantly simplifies legal jargon, flags risks,
-                  generates custom legal documents, and streamlines e-signatures and version management.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                  {isAuthenticated ? (
-                    <>
-                      <Button
-                        size="lg"
-                        className="gap-2 bg-gradient-to-r from-primary to-secondary hover:shadow-lg hover:shadow-primary/50 text-white font-bold text-base px-8"
-                        asChild
-                      >
-                        <Link to="/document-creation">
-                          Document Generation <ArrowRight className="w-5 h-5" />
-                        </Link>
-                      </Button>
-                      <Button
-                        size="lg"
-                        variant="outline"
-                        className="border-2 border-muted-foreground/30 font-bold text-base px-8 bg-transparent"
-                        asChild
-                      >
-                        <Link to="/document-analyzer">Document Analyzer</Link>
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        size="lg"
-                        className="gap-2 bg-gradient-to-r from-primary to-secondary hover:shadow-lg hover:shadow-primary/50 text-white font-bold text-base px-8"
-                        asChild
-                      >
-                        <Link to="/auth/signup">
-                          Sign Up <ArrowRight className="w-5 h-5" />
-                        </Link>
-                      </Button>
-                      <Button
-                        size="lg"
-                        variant="outline"
-                        className="border-2 border-muted-foreground/30 font-bold text-base px-8 bg-transparent"
-                        asChild
-                      >
-                        <Link to="/auth/signin">Sign In</Link>
-                      </Button>
-                    </>
-                  )}
-                </div>
-                <div className="flex items-center gap-6 pt-4 text-sm">
-                  <div className="flex items-center gap-2 font-semibold">
-                    <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    <span>No card needed</span>
-                  </div>
-                </div>
+            {/* Left Column: Hero Text & Call to Actions */}
+            <div className="lg:col-span-6 space-y-6 text-left animate-fade-in">
+              {/* Fluffy Glossy Pill Tag */}
+              <div className="inline-flex items-center gap-2.5 px-4 py-1.5 glass-pill shadow-glass-sm">
+                <span className="w-2 h-2 rounded-full bg-cyan-300 shadow-[0_0_10px_#67e8f9] animate-pulse" />
+                <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
+                <span className="text-xs font-bold tracking-wider uppercase bg-gradient-to-r from-cyan-200 via-white to-sky-200 bg-clip-text text-transparent">
+                  Autonomous Liquid Legal Intelligence
+                </span>
               </div>
 
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl blur-xl"></div>
-                <div className="relative bg-gradient-to-br from-primary/5 to-secondary/5 rounded-2xl p-1 border border-primary/30">
-                  <div className="bg-card rounded-xl overflow-hidden border border-primary/10">
-                    {/* Toggle Buttons */}
-                    <div className="flex border-b border-primary/10">
-                      <button
-                        onClick={() => setActiveDemo("analyzer")}
-                        className={`flex-1 px-6 py-3 text-sm font-bold transition-all ${
-                          activeDemo === "analyzer"
-                            ? "bg-gradient-to-r from-primary to-secondary text-white"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        Document Analysis
-                      </button>
-                      <button
-                        onClick={() => setActiveDemo("creator")}
-                        className={`flex-1 px-6 py-3 text-sm font-bold transition-all ${
-                          activeDemo === "creator"
-                            ? "bg-gradient-to-r from-primary to-secondary text-white"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        Document Generator
-                      </button>
-                    </div>
+              {/* Headline */}
+              <h1 className="text-4xl sm:text-6xl lg:text-[4.25rem] font-black tracking-tight leading-[1.06] text-white font-display">
+                Legal clarity in{" "}
+                <span className="relative inline-block">
+                  <span className="bg-gradient-to-r from-cyan-300 via-sky-200 to-amber-200 bg-clip-text text-transparent">
+                    seconds
+                  </span>
+                  <span className="absolute -bottom-1 left-0 right-0 h-1.5 bg-gradient-to-r from-cyan-400/90 via-purple-400/80 to-amber-300/90 rounded-full blur-[2px]" />
+                </span>
+                , not hours.
+              </h1>
 
-                    {/* Content Area */}
-                    <div className="p-8 space-y-4 min-h-64">
-                      {activeDemo === "analyzer" ? (
-                        <>
-                          <div className="flex items-center gap-3 pb-4 border-b border-primary/20">
-                            <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
-                              <FileText className="w-6 h-6 text-white" />
-                            </div>
-                            <span className="font-bold text-lg">Document Analysis</span>
-                          </div>
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/10">
-                              <ArrowUpRight className="w-5 h-5 text-primary flex-shrink-0" />
-                              <span className="text-sm font-medium">Clauses decoded instantly</span>
-                            </div>
-                            <div className="flex items-center gap-3 p-3 bg-secondary/5 rounded-lg border border-secondary/10">
-                              <Shield className="w-5 h-5 text-secondary flex-shrink-0" />
-                              <span className="text-sm font-medium">Risk alerts highlighted</span>
-                            </div>
-                            <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/10">
-                              <Zap className="w-5 h-5 text-primary flex-shrink-0" />
-                              <span className="text-sm font-medium">Key terms simplified</span>
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="flex items-center gap-3 pb-4 border-b border-secondary/20">
-                            <div className="w-10 h-10 bg-gradient-to-br from-secondary to-primary rounded-lg flex items-center justify-center">
-                              <Sparkles className="w-6 h-6 text-white" />
-                            </div>
-                            <span className="font-bold text-lg">Document Generator</span>
-                          </div>
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-3 p-3 bg-secondary/5 rounded-lg border border-secondary/10">
-                              <Zap className="w-5 h-5 text-secondary flex-shrink-0" />
-                              <span className="text-sm font-medium">AI-powered document creation</span>
-                            </div>
-                            <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/10">
-                              <ArrowUpRight className="w-5 h-5 text-primary flex-shrink-0" />
-                              <span className="text-sm font-medium">Chat-based editing interface</span>
-                            </div>
-                            <div className="flex items-center gap-3 p-3 bg-secondary/5 rounded-lg border border-secondary/10">
-                              <FileText className="w-5 h-5 text-secondary flex-shrink-0" />
-                              <span className="text-sm font-medium">Instant download & regenerate</span>
-                            </div>
-                          </div>
-                        </>
-                      )}
+              <p className="text-base sm:text-lg text-slate-200/85 leading-relaxed max-w-xl font-normal">
+                Analyze contracts, detect hidden liabilities, compose customized agreements, and finalize legally binding digital signatures inside a weightless, liquid-glass workspace.
+              </p>
+
+              {/* Attractive Action Buttons */}
+              <div className="flex flex-wrap items-center gap-4 pt-2">
+                {isAuthenticated ? (
+                  <>
+                    <Button
+                      size="lg"
+                      variant="aurora"
+                      className="h-12 px-8 text-sm group"
+                      asChild
+                    >
+                      <Link to="/document-creation">
+                        <Sparkles className="w-4 h-4 text-cyan-300" />
+                        <span>Open Document Studio</span>
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </Link>
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant="glass"
+                      className="h-12 px-7 text-sm"
+                      asChild
+                    >
+                      <Link to="/document-analyser">Analyze Agreement</Link>
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      size="lg"
+                      variant="aurora"
+                      className="h-12 px-8 text-sm group"
+                      asChild
+                    >
+                      <Link to="/signup">
+                        <Sparkles className="w-4 h-4 text-cyan-300" />
+                        <span>Get Started Free</span>
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </Link>
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant="glass"
+                      className="h-12 px-7 text-sm"
+                      asChild
+                    >
+                      <Link to="/login">Sign In</Link>
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              {/* Cushioned Feature Checklist */}
+              <div className="flex flex-wrap items-center gap-4 pt-2 text-xs font-semibold text-slate-200/85">
+                {["Zero Credit Card Required", "Bank-Grade Encryption", "eIDAS & ESIGN Compliant"].map((item) => (
+                  <div key={item} className="inline-flex items-center gap-2 glass-subtle px-3 py-1.5 rounded-full">
+                    <span className="w-4 h-4 rounded-full bg-cyan-400/25 text-cyan-300 flex items-center justify-center font-bold text-[10px] shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)]">
+                      ✓
+                    </span>
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right Column: Fluffy Interactive Liquid Glass Sentinel Console */}
+            <div className="lg:col-span-6 flex justify-center [perspective:1200px]">
+              <div
+                ref={consoleRef}
+                onMouseMove={handleMouseMove}
+                onMouseLeave={handleMouseLeave}
+                style={{
+                  transform: `rotateX(${hudTilt.rx.toFixed(2)}deg) rotateY(${hudTilt.ry.toFixed(2)}deg)`,
+                }}
+                className="relative w-full max-w-lg glass-panel glass-reactive p-6 sm:p-7 rounded-[2.5rem] border border-white/35 shadow-fluffy overflow-hidden transition-transform duration-300 ease-out group"
+              >
+                {/* Dynamic Specular Light Glint Tracking Mouse */}
+                <div
+                  className="absolute pointer-events-none transition-opacity duration-300 rounded-full"
+                  style={{
+                    left: `${mousePos.x}px`,
+                    top: `${mousePos.y}px`,
+                    width: '340px',
+                    height: '340px',
+                    transform: 'translate(-50%, -50%)',
+                    background: 'radial-gradient(circle, rgba(255, 255, 255, 0.16) 0%, rgba(0, 212, 255, 0.08) 42%, transparent 72%)',
+                    zIndex: 1,
+                  }}
+                />
+
+                {/* Top Interactive Contract Selector Tabs */}
+                <div className="relative z-10 flex items-center justify-between pb-4 border-b border-white/15 gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]" />
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-white truncate">
+                      Contract Sentinel HUD
+                    </span>
+                  </div>
+
+                  {/* 3 Interactive Fluffy Document Pills */}
+                  <div className="flex items-center gap-1 p-1 rounded-full bg-white/[0.07] border border-white/20 shadow-[inset_0_1px_3px_rgba(0,0,0,0.3)]">
+                    {contractsData.map((contract, idx) => (
+                      <button
+                        key={contract.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveContractIndex(idx)
+                          setIsStamped(false)
+                        }}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-all duration-300 ease-fluffy ${
+                          activeContractIndex === idx
+                            ? "bg-gradient-to-b from-white/30 to-cyan-400/20 text-white border border-white/45 shadow-[inset_0_1.5px_2px_rgba(255,255,255,0.85),0_4px_12px_rgba(0,212,255,0.25)] scale-[1.04]"
+                            : "text-slate-300/80 hover:text-white"
+                        }`}
+                      >
+                        {contract.category}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Active Document Header Banner with Live Risk Health Gauge */}
+                <div className="relative z-10 py-4 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="glass-circle w-12 h-12 shadow-glass-glow flex-shrink-0">
+                      <FileCheck className="w-5 h-5 text-cyan-300" />
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="text-sm sm:text-base font-bold text-white truncate">
+                        {activeContract.name}
+                      </h4>
+                      <p className="text-xs text-slate-300/80 flex items-center gap-1.5">
+                        <span className="text-cyan-300 font-semibold">{activeContract.category}</span>
+                        <span>• {activeTool === "audit" ? activeContract.auditHash : "3 Verified Clauses"}</span>
+                      </p>
                     </div>
                   </div>
+
+                  {/* Glossy Health Badge */}
+                  <div className="glass-pill px-3.5 py-1.5 flex items-center gap-2 flex-shrink-0 border-white/35">
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    <div className="text-right">
+                      <span className="text-xs font-extrabold text-white block leading-none">
+                        {displayScore}
+                      </span>
+                      <span className="text-[10px] text-emerald-300 font-semibold">
+                        {displayScoreLabel}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Interactive Clause Cards Deck */}
+                <div className="relative z-10 space-y-2.5 py-1">
+                  {activeContract.clauses.map((clause) => {
+                    const isFixed = !!fixedClauses[`${activeContract.id}-${clause.id}`]
+                    return (
+                      <div
+                        key={clause.id}
+                        className={`p-3.5 rounded-2xl transition-all duration-300 border ${
+                          clause.fixable && !isFixed
+                            ? "bg-amber-500/12 border-amber-300/45 shadow-[inset_0_1.5px_2px_rgba(255,255,255,0.25)] hover:border-amber-300/75"
+                            : "glass-subtle border-white/20 hover:border-white/35"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                          <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                            {clause.fixable && !isFixed ? (
+                              <AlertTriangle className="w-3.5 h-3.5 text-amber-300 flex-shrink-0" />
+                            ) : (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300 flex-shrink-0" />
+                            )}
+                            {clause.title}
+                          </span>
+
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                            clause.fixable && !isFixed
+                              ? "bg-amber-400/20 text-amber-200 border border-amber-300/40"
+                              : "bg-emerald-400/20 text-emerald-200 border border-emerald-300/40"
+                          }`}>
+                            {isFixed ? "Neutralized" : clause.status}
+                          </span>
+                        </div>
+
+                        <p className="text-[11px] text-slate-200/85 leading-relaxed mb-2">
+                          {isFixed ? clause.fixText : clause.desc}
+                        </p>
+
+                        {/* Interactive AI Fix Action Button */}
+                        {clause.fixable && (
+                          <div className="pt-1 flex justify-end">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={isFixed ? "emerald" : "default"}
+                              onClick={() => toggleFixClause(activeContract.id, clause.id)}
+                              className="h-7 px-3.5 text-[11px]"
+                            >
+                              <Sparkles className="w-3 h-3" />
+                              <span>{isFixed ? "Undo AI Redraft" : "AI Auto-Redraft Clause"}</span>
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Bottom Interactive Toolbar */}
+                <div className="relative z-10 pt-4 mt-3 border-t border-white/15 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={activeTool === "scanner" ? "default" : "glass"}
+                      onClick={() => setActiveTool("scanner")}
+                      className="h-8 px-3 text-xs"
+                    >
+                      <Shield className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Scanner</span>
+                    </Button>
+
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={activeTool === "audit" ? "secondary" : "glass"}
+                      onClick={() => setActiveTool("audit")}
+                      className="h-8 px-3 text-xs"
+                    >
+                      <Scale className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Audit Trail</span>
+                    </Button>
+                  </div>
+
+                  {/* Stamp Digital Signature Preview */}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={isStamped ? "emerald" : "glass"}
+                    onClick={() => setIsStamped(!isStamped)}
+                    className="h-8 px-3.5 text-xs"
+                  >
+                    <Award className="w-3.5 h-3.5" />
+                    <span>{isStamped ? "✓ E-Sign Attached" : "Test E-Signature"}</span>
+                  </Button>
                 </div>
               </div>
             </div>
+
           </div>
         </section>
 
-        <section
-          id="features-detailed"
-          className="w-full px-4 sm:px-6 lg:px-8 py-16 md:py-24 border-t border-border" // Changed to w-full
-        >
-          <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 rounded-full mb-6">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-sm font-bold text-transparent bg-gradient-to-r from-primary to-secondary bg-clip-text">
-                Core Capabilities
+        {/* ================= INTERACTIVE DEMO VIEWER ================= */}
+        <section className="relative py-14 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+          <div className="glass-panel glass-reactive p-7 sm:p-10 rounded-[2.5rem] border border-white/25 shadow-fluffy">
+
+            {/* Segmented Pill Tabs */}
+            <div className="relative z-10 flex justify-center mb-8">
+              <div className="inline-flex p-1.5 rounded-full bg-white/[0.08] border border-white/25 backdrop-blur-2xl shadow-[inset_0_2px_4px_rgba(0,0,0,0.35)]">
+                <button
+                  type="button"
+                  onClick={() => setActiveDemo("analyzer")}
+                  className={`px-6 py-2.5 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 ease-fluffy ${
+                    activeDemo === "analyzer"
+                      ? "bg-gradient-to-b from-white/30 to-cyan-400/20 text-white border border-white/45 shadow-[inset_0_2px_2px_rgba(255,255,255,0.85),0_6px_18px_rgba(0,212,255,0.28)] scale-[1.03]"
+                      : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  AI Document Analysis
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveDemo("creator")}
+                  className={`px-6 py-2.5 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 ease-fluffy ${
+                    activeDemo === "creator"
+                      ? "bg-gradient-to-b from-white/30 to-cyan-400/20 text-white border border-white/45 shadow-[inset_0_2px_2px_rgba(255,255,255,0.85),0_6px_18px_rgba(0,212,255,0.28)] scale-[1.03]"
+                      : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  Smart Generator
+                </button>
+              </div>
+            </div>
+
+            {/* Demo Content Cards */}
+            {activeDemo === "analyzer" ? (
+              <div className="relative z-10 space-y-4 animate-fade-in">
+                <div className="flex items-center gap-4 pb-4 border-b border-white/15">
+                  <div className="glass-circle w-12 h-12 shadow-glass-glow">
+                    <FileText className="w-6 h-6 text-cyan-300" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white font-display">Non-Disclosure Agreement (NDA)</h3>
+                    <p className="text-xs text-slate-300/80">Clause Breakdown & Real-Time Risk Profiler</p>
+                  </div>
+                </div>
+
+                <div className="grid sm:grid-cols-3 gap-4 pt-2">
+                  <div className="glass-panel glass-reactive glass-panel-interactive p-5 rounded-3xl border border-white/20">
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-2 mb-2 text-cyan-300">
+                        <Sparkles className="w-4 h-4" />
+                        <span className="text-xs font-bold uppercase tracking-wider">Clause Decoded</span>
+                      </div>
+                      <p className="text-sm font-bold text-white mb-1">Section 4.1 Indemnity</p>
+                      <p className="text-xs text-slate-300/85 leading-relaxed">
+                        Instant translation: Mutual protection applies only up to total fees paid, capping liability.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="glass-panel glass-reactive glass-panel-interactive p-5 rounded-3xl border border-white/20">
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-2 mb-2 text-amber-300">
+                        <Shield className="w-4 h-4" />
+                        <span className="text-xs font-bold uppercase tracking-wider">Risk Flagged</span>
+                      </div>
+                      <p className="text-sm font-bold text-white mb-1">Non-Compete Scope</p>
+                      <p className="text-xs text-slate-300/85 leading-relaxed">
+                        High risk: 36-month clause exceeds typical jurisdiction limits. AI recommends 12 months.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="glass-panel glass-reactive glass-panel-interactive p-5 rounded-3xl border border-white/20">
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-2 mb-2 text-emerald-300">
+                        <Zap className="w-4 h-4" />
+                        <span className="text-xs font-bold uppercase tracking-wider">Smart Action</span>
+                      </div>
+                      <p className="text-sm font-bold text-white mb-1">Governing Law</p>
+                      <p className="text-xs text-slate-300/85 leading-relaxed">
+                        Arbitration clause aligns with standard ICC regulations. Safe to execute.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="relative z-10 space-y-4 animate-fade-in">
+                <div className="flex items-center gap-4 pb-4 border-b border-white/15">
+                  <div className="glass-circle w-12 h-12 shadow-[inset_0_2px_3px_rgba(255,255,255,0.85),0_6px_20px_rgba(245,158,11,0.35)]">
+                    <PenTool className="w-6 h-6 text-amber-300" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white font-display">Conversational Legal Composer</h3>
+                    <p className="text-xs text-slate-300/80">Draft, refine, and enforce agreements in real time</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <div className="flex justify-end">
+                    <div className="glass-pill px-5 py-3 max-w-md text-xs sm:text-sm text-white border-white/35">
+                      "Draft a master consulting agreement with IP assignment and net 30 invoices."
+                    </div>
+                  </div>
+                  <div className="flex justify-start">
+                    <div className="glass-panel p-5 max-w-lg rounded-3xl border border-cyan-300/35 text-xs sm:text-sm text-slate-100">
+                      <div className="relative z-10">
+                        <div className="flex items-center gap-2 mb-2 text-cyan-300 font-bold text-xs">
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>AdvocAI Generated in 1.4s</span>
+                        </div>
+                        <p className="leading-relaxed text-slate-200/90">
+                          Drafted standard 9-clause agreement including explicit Work-for-Hire transfers, indemnity mutualization, and statutory net 30 payment terms.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ================= CORE CAPABILITIES ================= */}
+        <section id="features-detailed" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="text-center mb-16 space-y-3">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 glass-pill">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
+              <span className="text-xs font-bold tracking-wider uppercase text-cyan-200">
+                End-To-End Architecture
               </span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-black mb-4">Powerful Features That Work Together</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Every tool you need to master legal documents, from AI analysis to secure collaboration.
+            <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight font-display">
+              Comprehensive Legal Automation Suite
+            </h2>
+            <p className="text-slate-300/80 text-base max-w-xl mx-auto">
+              Every workflow engineered with liquid transparency, cushion responsiveness, and legal precision.
             </p>
           </div>
 
-          {/* Feature 1: AI-Powered Document Analyzer */}
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
-            <div className="relative order-2 md:order-1 cursor-pointer" onClick={() => setSelectedFeature("analyzer")}>
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
-              <div className="relative bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl p-1 border border-primary/30 overflow-hidden">
-                <div className="relative bg-gradient-to-br from-primary/5 via-card to-secondary/5 rounded-xl h-64 flex flex-col items-center justify-center gap-6 p-8">
-                  <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center animate-pulse">
-                    <FileText className="w-10 h-10 text-white" />
-                  </div>
-                  <div className="text-center space-y-2">
-                    <p className="text-sm font-bold text-primary">Document Analysis Engine</p>
-                    <p className="text-xs text-muted-foreground">AI-powered clause detection</p>
-                  </div>
-                  <div className="w-full space-y-2">
-                    <div className="flex gap-2">
-                      <div className="flex-1 h-2 bg-primary/40 rounded-full"></div>
-                      <span className="text-xs text-primary font-mono">100%</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="flex-1 h-2 bg-secondary/40 rounded-full"></div>
-                      <span className="text-xs text-secondary font-mono">5</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="space-y-6 order-1 md:order-2">
-              <div>
-                <h3 className="text-3xl md:text-4xl font-black mb-3 text-transparent bg-gradient-to-r from-primary to-secondary bg-clip-text">
-                  AI Document Analyzer
-                </h3>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Transform complex legal documents into clear, actionable insights. Our advanced AI reads through pages
-                  of dense legal text and instantly highlights key terms, identifies risks, and provides plain-English
-                  summaries. Say goodbye to hours of frustrating document review.
-                </p>
-              </div>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm font-bold">✓</span>
-                  </div>
-                  <span className="text-muted-foreground">Instant clause-by-clause breakdown</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm font-bold">✓</span>
-                  </div>
-                  <span className="text-muted-foreground">Risk flagging and liability alerts</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm font-bold">✓</span>
-                  </div>
-                  <span className="text-muted-foreground">Ask follow-up questions about any document</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Feature 2: Smart Document Creator */}
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
-            <div className="space-y-6 order-1 md:order-1">
-              <div>
-                <h3 className="text-3xl md:text-4xl font-black mb-3 text-transparent bg-gradient-to-r from-secondary to-primary bg-clip-text">
-                  Smart Document Creator
-                </h3>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Generate custom legal documents through an intuitive AI-powered chatbot. Describe exactly what you
-                  need, and our AI creates a tailored document. Edit, refine, and regenerate using natural conversation
-                  until your document is perfect.
-                </p>
-              </div>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-gradient-to-br from-secondary to-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm font-bold">✓</span>
-                  </div>
-                  <span className="text-muted-foreground">Conversational document generation</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-gradient-to-br from-secondary to-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm font-bold">✓</span>
-                  </div>
-                  <span className="text-muted-foreground">Edit through natural chat interaction</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-gradient-to-br from-secondary to-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm font-bold">✓</span>
-                  </div>
-                  <span className="text-muted-foreground">Download, edit, or regenerate instantly</span>
-                  </li>
-              </ul>
-            </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Feature 1 */}
             <div
-              className="relative group cursor-pointer order-2 md:order-2"
+              onClick={() => setSelectedFeature("analyzer")}
+              className="glass-panel glass-reactive glass-panel-interactive p-8 rounded-[2.25rem] border border-white/25 cursor-pointer space-y-5 flex flex-col justify-between"
+            >
+              <div className="relative z-10">
+                <div className="glass-circle w-14 h-14 mb-6 shadow-[inset_0_2px_3px_rgba(255,255,255,0.92),0_10px_24px_rgba(0,212,255,0.35)]">
+                  <FileText className="w-7 h-7 text-cyan-300" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2 font-display">Instant Analyzer</h3>
+                <p className="text-slate-300/85 text-sm leading-relaxed">
+                  Deep NLP reads through dense contracts, decrypts convoluted legalese, flags one-sided liabilities, and generates instant summaries.
+                </p>
+              </div>
+              <div className="relative z-10 pt-4 border-t border-white/15 flex items-center justify-between">
+                <span className="text-xs font-bold text-cyan-300">Explore Capabilities</span>
+                <span className="glass-circle w-8 h-8 text-cyan-300">
+                  <ArrowRight className="w-4 h-4" />
+                </span>
+              </div>
+            </div>
+
+            {/* Feature 2 */}
+            <div
               onClick={() => setSelectedFeature("creator")}
+              className="glass-panel glass-reactive glass-panel-interactive p-8 rounded-[2.25rem] border border-white/25 cursor-pointer space-y-5 flex flex-col justify-between"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-secondary/20 to-primary/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
-              <div className="relative bg-gradient-to-br from-secondary/10 to-primary/10 rounded-2xl p-1 border border-secondary/30 overflow-hidden">
-                <div className="relative bg-gradient-to-b from-card via-card/50 to-card rounded-xl p-6 h-64 flex flex-col justify-end gap-3">
-                  <div className="space-y-3">
-                    <div className="flex gap-2 justify-start">
-                      <div className="bg-primary/20 rounded-lg px-4 py-2 text-xs text-primary max-w-[70%]">
-                        Create a contract...
-                      </div>
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <div className="bg-secondary/20 rounded-lg px-4 py-2 text-xs text-secondary max-w-[70%]">
-                        Processing...
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <div
-                        className="w-3 h-3 bg-secondary rounded-full animate-bounce"
-                        style={{ animationDelay: "0s" }}
-                      ></div>
-                      <div
-                        className="w-3 h-3 bg-secondary rounded-full animate-bounce"
-                        style={{ animationDelay: "0.2s" }}
-                      ></div>
-                      <div
-                        className="w-3 h-3 bg-secondary rounded-full animate-bounce"
-                        style={{ animationDelay: "0.4s" }}
-                      ></div>
-                    </div>
-                  </div>
+              <div className="relative z-10">
+                <div className="glass-circle w-14 h-14 mb-6 shadow-[inset_0_2px_3px_rgba(255,255,255,0.92),0_10px_24px_rgba(245,158,11,0.35)]">
+                  <Sparkles className="w-7 h-7 text-amber-300" />
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Feature 3: Document History Timeline */}
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
-            <div
-              className="relative group order-2 md:order-1 cursor-pointer"
-              onClick={() => setSelectedFeature("timeline")}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
-              <div className="relative bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl p-1 border border-primary/30 overflow-hidden">
-                <div className="relative bg-gradient-to-br from-card to-card/80 rounded-xl p-6 h-64 flex flex-col justify-center gap-4">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-3 h-3 bg-green-400 rounded-full shadow-lg shadow-green-400/50"></div>
-                      <div className="flex-1">
-                        <p className="text-sm font-bold">Current v1.2.3</p>
-                        <p className="text-xs text-muted-foreground">Now</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 opacity-70">
-                      <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Previous v1.2.2</p>
-                        <p className="text-xs text-muted-foreground">2 hours ago</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 opacity-50">
-                      <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Previous v1.2.1</p>
-                        <p className="text-xs text-muted-foreground">1 day ago</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="space-y-6 order-1 md:order-2">
-              <div>
-                <h3 className="text-3xl md:text-4xl font-black mb-3 text-transparent bg-gradient-to-r from-primary to-secondary bg-clip-text">
-                  Document History Timeline
-                </h3>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Track every change made to your documents with a clear, chronological timeline. Access all previous
-                  versions of your documents with timestamps, see exactly what was modified, and instantly restore any
-                  earlier version with a single click.
+                <h3 className="text-2xl font-bold text-white mb-2 font-display">Smart Generator</h3>
+                <p className="text-slate-300/85 text-sm leading-relaxed">
+                  Compose robust contracts from conversational briefs. Prompt edits, refine tone, add multi-party riders, and finalize with precision.
                 </p>
               </div>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm font-bold">✓</span>
-                  </div>
-                  <span className="text-muted-foreground">Complete version history with timestamps</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm font-bold">✓</span>
-                  </div>
-                  <span className="text-muted-foreground">Instantly restore any previous version</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm font-bold">✓</span>
-                  </div>
-                  <span className="text-muted-foreground">Track changes made to your documents</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Feature 4: Secure E-Signature */}
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
-            <div className="space-y-6 order-1 md:order-1">
-              <div>
-                <h3 className="text-3xl md:text-4xl font-black mb-3 text-transparent bg-gradient-to-r from-primary to-secondary bg-clip-text">
-                  Secure E-Signature
-                </h3>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Sign documents with complete legal validity and security. Our e-signature solution is compliant with
-                  eIDAS, ESIGN Act, and other global regulations. Send signature requests to multiple parties, track
-                  completion status, and store signed documents securely.
-                </p>
+              <div className="relative z-10 pt-4 border-t border-white/15 flex items-center justify-between">
+                <span className="text-xs font-bold text-amber-300">Explore Capabilities</span>
+                <span className="glass-circle w-8 h-8 text-amber-300">
+                  <ArrowRight className="w-4 h-4" />
+                </span>
               </div>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm font-bold">✓</span>
-                  </div>
-                  <span className="text-muted-foreground">Legally binding digital signatures</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm font-bold">✓</span>
-                  </div>
-                  <span className="text-muted-foreground">Multi-party signature workflows</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm font-bold">✓</span>
-                  </div>
-                  <span className="text-muted-foreground">Bank-level encryption and audit trail</span>
-                </li>
-              </ul>
             </div>
+
+            {/* Feature 3 */}
             <div
-              className="relative group cursor-pointer order-2 md:order-2"
               onClick={() => setSelectedFeature("signature")}
+              className="glass-panel glass-reactive glass-panel-interactive p-8 rounded-[2.25rem] border border-white/25 cursor-pointer space-y-5 flex flex-col justify-between"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
-              <div className="relative bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl p-1 border border-primary/30 overflow-hidden">
-                <div className="relative bg-gradient-to-b from-card to-card/50 rounded-xl p-8 h-64 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <p className="text-xs font-bold text-primary">DOCUMENT SIGNATURE</p>
-                    <p className="text-sm text-muted-foreground">Legal Agreement v1.2</p>
-                  </div>
-                  <div className="border-2 border-dashed border-primary/30 rounded-lg h-20 flex items-center justify-center bg-primary/5">
-                    <div className="text-center">
-                      <Shield className="w-8 h-8 text-primary mx-auto mb-2" />
-                      <p className="text-xs text-primary font-mono">Sign here</p>
-                    </div>
-                  </div>
-                  <button className="w-full py-2 bg-gradient-to-r from-primary to-secondary text-white text-sm font-bold rounded-lg hover:shadow-lg transition">
-                    Sign Document
-                  </button>
+              <div className="relative z-10">
+                <div className="glass-circle w-14 h-14 mb-6 shadow-[inset_0_2px_3px_rgba(255,255,255,0.92),0_10px_24px_rgba(0,245,180,0.35)]">
+                  <Shield className="w-7 h-7 text-emerald-300" />
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Feature 5: Document Generator with Version Tracking & E-Signature */}
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-20 border-t border-border pt-20">
-            <div
-              className="relative group cursor-pointer order-2 md:order-1"
-              onClick={() => setSelectedFeature("gen-track-sign")}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-secondary/20 to-primary/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
-              <div className="relative bg-gradient-to-br from-secondary/10 to-primary/10 rounded-2xl p-1 border border-secondary/30 overflow-hidden">
-                <div className="relative bg-gradient-to-b from-card via-card/50 to-card rounded-xl p-6 h-64 flex flex-col gap-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-secondary">DOCUMENT GENERATOR</span>
-                    <span className="text-xs text-orange-400 bg-orange-400/10 px-2 py-1 rounded">v1.2.3</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <div className="flex-1 h-2 bg-orange-400/40 rounded-full"></div>
-                    <span className="text-xs text-orange-400 font-mono">Version 3</span>
-                  </div>
-                  <div className="flex gap-2 items-center">
-                    <div className="w-6 h-6 bg-lime-400/20 rounded-full flex items-center justify-center">
-                      <CheckCircle2 className="w-4 h-4 text-lime-400" />
-                    </div>
-                    <span className="text-xs text-lime-400">3 Signatures Verified</span>
-                  </div>
-                  <div className="mt-auto pt-4 border-t border-primary/20">
-                    <p className="text-xs text-muted-foreground text-center">Last edited 2 hours ago</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="space-y-6 order-1 md:order-2">
-              <div>
-                <h3 className="text-3xl md:text-4xl font-black mb-3 text-transparent bg-gradient-to-r from-secondary to-primary bg-clip-text">
-                  Generate, Track & Sign
-                </h3>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Create custom documents with AI, track every version change in real-time, and collect legally binding
-                  e-signatures from multiple parties. Manage your entire document lifecycle in one platform.
+                <h3 className="text-2xl font-bold text-white mb-2 font-display">Sign & Verify</h3>
+                <p className="text-slate-300/85 text-sm leading-relaxed">
+                  Legally enforceable e-signatures compliant with global eIDAS frameworks. Maintain tamper-evident audit trails with cryptographic version hashing.
                 </p>
               </div>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-gradient-to-br from-secondary to-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm font-bold">✓</span>
-                  </div>
-                  <span className="text-muted-foreground">AI-powered custom document creation</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-gradient-to-br from-secondary to-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm font-bold">✓</span>
-                  </div>
-                  <span className="text-muted-foreground">Complete version history with timestamps</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-gradient-to-br from-secondary to-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm font-bold">✓</span>
-                  </div>
-                  <span className="text-muted-foreground">Legally binding e-signatures & verification</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-gradient-to-br from-secondary to-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm font-bold">✓</span>
-                  </div>
-                  <span className="text-muted-foreground">Edit and regenerate with AI suggestions</span>
-                </li>
-              </ul>
+              <div className="relative z-10 pt-4 border-t border-white/15 flex items-center justify-between">
+                <span className="text-xs font-bold text-emerald-300">Explore Capabilities</span>
+                <span className="glass-circle w-8 h-8 text-emerald-300">
+                  <ArrowRight className="w-4 h-4" />
+                </span>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* How It Works */}
-        <section
-          id="how-it-works"
-          className="w-full px-4 sm:px-6 lg:px-8 py-16 md:py-24 border-t border-border"
-        >
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black mb-4">Three Simple Steps to Mastery</h2>
-            <p className="text-lg text-muted-foreground">From analysis to generation to signature in minutes</p>
+        {/* ================= HOW IT WORKS (3 STEPS) ================= */}
+        <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+          <div className="text-center mb-14 space-y-3">
+            <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight font-display">
+              Three Steps to Legal Clarity
+            </h2>
+            <p className="text-slate-300/80 text-sm sm:text-base">
+              From raw intake to legally enforceable completion in minutes.
+            </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
+          <div className="grid md:grid-cols-3 gap-8">
             {[
               {
                 number: "01",
-                title: "Analyze or Generate",
+                title: "Upload or Describe",
                 description:
-                  "Upload documents for instant AI analysis or create new ones from scratch with our intelligent generator.",
-                color: "from-primary",
+                  "Drag and drop any PDF/DOCX contract for instant risk analysis, or instruct the AI assistant to draft a new customized legal agreement.",
               },
               {
                 number: "02",
-                title: "Version & Edit",
+                title: "Inspect & Version",
                 description:
-                  "Make edits, request AI-powered changes, and track every version with complete revision history.",
-                color: "from-secondary",
+                  "Review clause recommendations, adjust terms in the rich visual editor, and track version differentials with chronological rollback.",
               },
               {
                 number: "03",
-                title: "Sign & Deliver",
+                title: "Sign & Secure",
                 description:
-                  "Collect legally binding e-signatures from all parties with verification and secure audit trails.",
-                color: "from-primary",
+                  "Dispatch signature invitations, capture certified signatures, and download verified high-resolution PDF documents.",
               },
-            ].map((step, idx /* eslint-disable-line no-unused-vars */) => (
-              <div key={step.number} className="relative group">
-                <div
-                  className={`absolute inset-0 bg-gradient-to-br ${step.color} to-transparent opacity-0 group-hover:opacity-10 transition-opacity rounded-xl`}
-                ></div>
-                <div className="relative border border-primary/20 rounded-xl p-8 group-hover:border-primary/40 transition-colors">
-                  <div
-                    className={`text-6xl font-black bg-gradient-to-r ${step.color} to-secondary bg-clip-text text-transparent mb-4 group-hover:scale-110 transition-transform`}
-                  >
+            ].map((step, idx) => (
+              <div
+                key={idx}
+                className="glass-panel glass-reactive glass-panel-interactive p-8 rounded-[2.25rem] border border-white/20 relative overflow-hidden group"
+              >
+                <div className="relative z-10">
+                  <div className="inline-flex items-center justify-center glass-pill px-4 py-1 text-sm font-black text-cyan-300 mb-5 font-mono">
                     {step.number}
                   </div>
-                  <h3 className="text-2xl font-bold mb-3">{step.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{step.description}</p>
+                  <h3 className="text-xl font-bold text-white mb-2 font-display">{step.title}</h3>
+                  <p className="text-slate-300/85 text-xs sm:text-sm leading-relaxed">
+                    {step.description}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
         </section>
 
-        {/* Footer */}
-        <footer className="border-t border-border relative">
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl"></div>
-          </div>
-          <div className="w-full px-4 sm:px-6 lg:px-8 py-16 relative z-10">
-            <div className="grid md:grid-cols-5 gap-12 mb-12">
-              {/* Brand */}
-              <div className="md:col-span-1">
-                <div className="flex items-center gap-3 mb-4">
-                  <img src="/advoc-ai-logo.png" alt="Advoc AI" className="h-8" />
-                  <span className="text-white font-black text-sm">Advoc AI</span>
-                </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Master legal documents with AI-powered analysis, generation, and secure e-signatures.
-                </p>
+        {/* ================= CTA BANNER ================= */}
+        <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+          <div className="glass-panel glass-reactive p-8 sm:p-12 rounded-[2.75rem] border border-white/30 text-center space-y-5 shadow-fluffy">
+            <div className="relative z-10 space-y-4">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 glass-pill">
+                <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
+                <span className="text-xs font-bold uppercase tracking-wider text-cyan-200">
+                  Ready in Seconds
+                </span>
               </div>
-
-              <div>
-                <h4 className="text-sm font-bold text-foreground mb-4">Product</h4>
-                <ul className="space-y-2">
-                  <li>
-                    <span className="text-xs text-muted-foreground hover:text-primary transition cursor-default">
-                      Features
-                    </span>
-                  </li>
-                  <li>
-                    <span className="text-xs text-muted-foreground hover:text-primary transition cursor-default">
-                      Pricing
-                    </span>
-                  </li>
-                  <li>
-                    <span className="text-xs text-muted-foreground hover:text-primary transition cursor-default">
-                      Security
-                    </span>
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-bold text-foreground mb-4">Company</h4>
-                <ul className="space-y-2">
-                  <li>
-                    <span className="text-xs text-muted-foreground hover:text-primary transition cursor-default">
-                      About
-                    </span>
-                  </li>
-                  <li>
-                    <span className="text-xs text-muted-foreground hover:text-primary transition cursor-default">
-                      Blog
-                    </span>
-                  </li>
-                  <li>
-                    <span className="text-xs text-muted-foreground hover:text-primary transition cursor-default">
-                      Contact
-                    </span>
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-bold text-foreground mb-4">Legal</h4>
-                <ul className="space-y-2">
-                  <li>
-                    <span className="text-xs text-muted-foreground hover:text-primary transition cursor-default">
-                      Privacy
-                    </span>
-                  </li>
-                  <li>
-                    <span className="text-xs text-muted-foreground hover:text-primary transition cursor-default">
-                      Terms
-                    </span>
-                  </li>
-                  <li>
-                    <span className="text-xs text-muted-foreground hover:text-primary transition cursor-default">
-                      Disclaimer
-                    </span>
-                  </li>
-                </ul>
+              <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight font-display">
+                Experience Frictionless Legal Workflows
+              </h2>
+              <p className="text-sm text-slate-300/85 max-w-lg mx-auto">
+                Draft, review, collaborate, and cryptographically sign legal contracts in one cohesive glass workspace.
+              </p>
+              <div className="flex flex-wrap justify-center gap-4 pt-2">
+                <Button asChild size="lg" variant="aurora" className="h-12 px-8 text-sm">
+                  <Link to={isAuthenticated ? "/document-creation" : "/signup"}>
+                    <Sparkles className="w-4 h-4 text-cyan-300" />
+                    <span>{isAuthenticated ? "Launch Studio" : "Start Free Workspace"}</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="glass" className="h-12 px-7 text-sm">
+                  <Link to="/document-analyser">Try Contract Analyzer</Link>
+                </Button>
               </div>
             </div>
+          </div>
+        </section>
 
-            <div className="border-t border-border/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-              <p className="text-xs text-muted-foreground">&copy; 2025 Advoc AI. All rights reserved.</p>
-              <div className="flex items-center gap-6">
-                <span className="text-xs text-muted-foreground">Powered by AI for legal professionals</span>
+        {/* ================= FOOTER ================= */}
+        <footer className="mt-12 border-t border-white/15 py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <div className="glass-circle w-9 h-9">
+                <Sparkles className="w-4 h-4 text-cyan-300" />
               </div>
+              <span className="text-lg font-extrabold text-white font-display">AdvocAI</span>
+              <span className="text-xs text-slate-400">© 2026 AdvocAI Platform. All rights reserved.</span>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-slate-300/85 font-semibold">
+              <span className="glass-pill px-3.5 py-1.5 cursor-pointer hover:text-white">Privacy Policy</span>
+              <span className="glass-pill px-3.5 py-1.5 cursor-pointer hover:text-white">Terms of Service</span>
+              <span className="glass-pill px-3.5 py-1.5 cursor-pointer hover:text-white">Security Whitepaper</span>
             </div>
           </div>
         </footer>
 
+        {/* Feature Detail Modal */}
         {selectedFeature && (
           <div
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in"
             onClick={() => setSelectedFeature(null)}
           >
             <div
-              className="bg-card border border-primary/30 rounded-2xl max-w-2xl w-full p-8 space-y-6 relative max-h-[80vh] overflow-y-auto"
+              className="glass-panel glass-reactive p-8 rounded-[2.25rem] max-w-xl w-full border border-white/35 space-y-6 shadow-fluffy relative"
               onClick={(e) => e.stopPropagation()}
             >
-              <button
-                onClick={() => setSelectedFeature(null)}
-                className="absolute top-4 right-4 p-2 hover:bg-muted rounded-lg transition"
-              >
-                <X className="w-6 h-6" />
-              </button>
-
-              <div>
-                <h2 className="text-4xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-4">
-                  {featureDetails[selectedFeature].title}
-                </h2>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  {featureDetails[selectedFeature].description}
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <h3 className="text-xl font-bold">Key Benefits:</h3>
-                <ul className="space-y-2">
-                  {featureDetails[selectedFeature].features.map((feature, idx /* eslint-disable-line no-unused-vars */) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <div className="w-6 h-6 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                        <span className="text-white text-sm font-bold">✓</span>
-                      </div>
-                      <span className="text-muted-foreground">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
               <Button
-                size="lg"
-                className="w-full gap-2 bg-gradient-to-r from-primary to-secondary hover:shadow-lg hover:shadow-primary/50 text-white font-bold text-base"
+                type="button"
+                variant="glass-circle"
+                size="icon-sm"
+                onClick={() => setSelectedFeature(null)}
+                className="w-8 h-8 absolute top-5 right-5 text-slate-300 hover:text-white"
               >
-                Try {featureDetails[selectedFeature].title} <ArrowRight className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </Button>
+
+              <div className="relative z-10">
+                <h3 className="text-2xl font-extrabold text-white mb-2 font-display">
+                  {featureDetails[selectedFeature]?.title}
+                </h3>
+                <p className="text-sm text-slate-300 leading-relaxed mb-6">
+                  {featureDetails[selectedFeature]?.description}
+                </p>
+
+                <div className="space-y-3">
+                  {featureDetails[selectedFeature]?.features.map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 text-sm text-slate-100 glass-subtle p-3 rounded-2xl">
+                      <div className="w-6 h-6 rounded-full bg-cyan-400/25 text-cyan-300 flex items-center justify-center font-bold text-xs shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)]">
+                        ✓
+                      </div>
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="relative z-10 pt-4 border-t border-white/15 flex justify-end">
+                <Button
+                  onClick={() => setSelectedFeature(null)}
+                  variant="aurora"
+                  className="px-6 h-10 text-xs"
+                >
+                  Got It
+                </Button>
+              </div>
             </div>
           </div>
         )}
+
       </div>
     </div>
   )

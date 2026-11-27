@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from '../api/axios';
-import { FileText, Download, Trash2, History, X, Check } from 'lucide-react';
+import { FileText, Download, Trash2, History, X, Check, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { saveAs } from 'file-saver';
-import { Button } from "@/Components/ui/Button";
+import { Button } from "@/Components/ui/button";
 
-const VersionsSidebar = ({ conversationId, onSelectVersion, onClose, currentVersion, onDeleteVersion }) => { // Added onDeleteVersion prop
+const VersionsSidebar = ({ conversationId, onSelectVersion, onClose, currentVersion, onDeleteVersion }) => {
   const [versions, setVersions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -46,45 +46,51 @@ const VersionsSidebar = ({ conversationId, onSelectVersion, onClose, currentVers
     }
   };
 
-  const handleDeleteVersionClick = async (versionNumber) => { // Renamed to avoid conflict with prop
+  const handleDeleteVersionClick = async (versionNumber) => {
     if (onDeleteVersion) {
       await onDeleteVersion(conversationId, versionNumber);
-      fetchDocumentVersions(); // Re-fetch versions after deletion
+      fetchDocumentVersions();
     }
   };
 
   return (
-    <>
-      <div className="p-4 border-b border-border/10 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <History className="w-5 h-5 text-primary" />
-          <span className="text-foreground font-semibold text-sm">Version History</span>
+    <div className="flex flex-col h-full glass-panel glass-reactive border border-white/25 p-4 shadow-fluffy overflow-hidden rounded-[2rem]">
+      {/* Header */}
+      <div className="relative z-10 pb-4 border-b border-white/15 flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="glass-circle w-9 h-9">
+            <History className="w-4 h-4 text-cyan-300" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-white tracking-wide">Version Timeline</h3>
+            <p className="text-[11px] text-slate-400">Chronological snapshot restore</p>
+          </div>
         </div>
-        <button 
-          onClick={() => onClose()} 
-          className="p-2 hover:bg-foreground/10 rounded-lg transition-all text-muted-foreground cursor-pointer"
+        <Button
+          onClick={() => onClose()}
+          variant="glass-circle"
+          size="icon-sm"
+          className="w-7 h-7 text-slate-300 hover:text-white"
           type="button"
+          title="Close Sidebar"
         >
-          <X className="w-5 h-5" />
-        </button>
+          <X className="w-4 h-4" />
+        </Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-2 custom-scrollbar">
+      {/* Version List */}
+      <div className="relative z-10 flex-1 overflow-y-auto py-3 space-y-2.5 custom-scrollbar pr-1">
         {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="flex flex-col items-center gap-3">
-              <History className="w-6 h-6 animate-spin text-primary" />
-              <p className="text-muted-foreground text-sm">Loading versions...</p>
-            </div>
+          <div className="flex flex-col items-center justify-center py-12 gap-2 text-slate-400">
+            <History className="w-5 h-5 animate-spin text-cyan-400" />
+            <span className="text-xs">Loading versions...</span>
           </div>
         ) : error ? (
-          <div className="text-destructive text-center py-8 text-sm px-3">
-            <p>{error}</p>
-          </div>
+          <div className="text-rose-400 text-center py-8 text-xs">{error}</div>
         ) : versions.length === 0 ? (
-          <div className="text-center py-8">
-            <History className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-muted-foreground text-sm">No versions found.</p>
+          <div className="text-center py-12 text-slate-400">
+            <History className="w-8 h-8 mx-auto mb-2 opacity-40" />
+            <p className="text-xs">No version snapshots recorded</p>
           </div>
         ) : (
           versions.map((version) => {
@@ -92,65 +98,60 @@ const VersionsSidebar = ({ conversationId, onSelectVersion, onClose, currentVers
             return (
               <div
                 key={version.version_number}
-                className={`p-3 rounded-lg border transition-all duration-200 ${
+                className={`p-3.5 rounded-2xl transition-all duration-300 ${
                   isCurrentVersion
-                    ? 'bg-primary/20 border-primary shadow-lg shadow-primary/10'
-                    : 'bg-card/40 border-border/50 hover:border-border/80 hover:bg-card/60'
+                    ? 'bg-white/20 border border-cyan-300/65 shadow-[inset_0_2px_2px_rgba(255,255,255,0.75),0_8px_22px_rgba(0,212,255,0.28)]'
+                    : 'glass-subtle hover:bg-white/12 hover:border-white/25'
                 }`}
               >
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <FileText className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-foreground text-sm truncate">
-                          Version {version.version_number}
-                        </h3>
-                        {isCurrentVersion && (
-                          <Check className="w-4 h-4 text-accent flex-shrink-0" />
-                        )}
-                      </div>
-                      <p className="text-muted-foreground text-xs mt-1">
-                        {new Date(version.timestamp).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </p>
-                    </div>
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <FileText className={`w-4 h-4 ${isCurrentVersion ? 'text-cyan-300' : 'text-slate-400'}`} />
+                    <span className="font-bold text-xs text-white">
+                      Version {version.version_number}
+                    </span>
+                    {isCurrentVersion && (
+                      <span className="glass-pill px-2 py-0.5 text-[10px] text-emerald-300 flex items-center gap-1">
+                        <Check className="w-3 h-3" /> Active
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                <div className="flex gap-2 mt-3">
+                <p className="text-[11px] text-slate-400 mb-3 flex items-center gap-1.5">
+                  <Clock className="w-3 h-3" />
+                  {new Date(version.timestamp).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </p>
+
+                <div className="flex items-center gap-2">
                   <Button
                     onClick={() => onSelectVersion(version.version_number)}
                     size="sm"
-                    className={`flex-1 text-xs font-medium rounded-lg transition-all ${
-                      isCurrentVersion
-                        ? 'bg-primary hover:bg-primary/80 text-foreground'
-                        : 'bg-primary/80 hover:bg-primary text-foreground'
-                    }`}
+                    variant={isCurrentVersion ? "default" : "glass"}
+                    className="flex-1 h-8 text-xs"
                   >
-                    <FileText className="w-3 h-3 mr-1.5" />
-                    View
+                    Load
                   </Button>
                   <Button
                     onClick={() => handleDownloadVersionPdf(version.version_number)}
-                    size="sm"
-                    variant="outline"
-                    className="border-border/20 bg-card/40 hover:bg-card/60 hover:border-border/30 text-muted-foreground text-xs rounded-lg transition-all px-2"
+                    size="icon-sm"
+                    variant="glass-circle"
+                    className="w-8 h-8 text-slate-200"
                     title="Download PDF"
                   >
                     <Download className="w-3.5 h-3.5" />
                   </Button>
                   <Button
-                    onClick={() => handleDeleteVersionClick(version.version_number)} // Call the new handler
-                    size="sm"
-                    variant="outline"
-                    className="border-destructive/30 bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs rounded-lg transition-all px-2"
-                    title="Delete"
+                    onClick={() => handleDeleteVersionClick(version.version_number)}
+                    size="icon-sm"
+                    variant="glass-circle"
+                    className="w-8 h-8 text-rose-300 hover:text-rose-100 hover:border-rose-400/50"
+                    title="Delete Version"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>
@@ -160,7 +161,7 @@ const VersionsSidebar = ({ conversationId, onSelectVersion, onClose, currentVers
           })
         )}
       </div>
-    </>
+    </div>
   );
 };
 

@@ -7,14 +7,22 @@ import {
   FileText,
   Loader2,
   History,
-  X,
   Sparkles,
   User,
   Copy,
   Check,
+  ChevronLeft,
+  ShieldCheck,
+  Plus
 } from 'lucide-react';
+import { Button } from "@/Components/ui/button";
 
-import { uploadDocument as uploadDocumentApi, getUserSessions as getUserSessionsApi, getChatHistory as getChatHistoryApi, sendChatMessage as sendChatMessageApi, } from '../utils/api';
+import {
+  uploadDocument as uploadDocumentApi,
+  getUserSessions as getUserSessionsApi,
+  getChatHistory as getChatHistoryApi,
+  sendChatMessage as sendChatMessageApi
+} from '../utils/api';
 
 const DocumentAnalyzer = () => {
   const fileInputRef = useRef(null);
@@ -30,8 +38,7 @@ const DocumentAnalyzer = () => {
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [dragActive, setDragActive] = useState(false);
-  const [isSummaryCopied, setIsSummaryCopied] = useState(false); // New state for copy status
-
+  const [isSummaryCopied, setIsSummaryCopied] = useState(false);
 
   const resetForNewDocument = () => {
     setUploadedFile(null);
@@ -39,13 +46,12 @@ const DocumentAnalyzer = () => {
     setSessionId(null);
     setChatHistory([]);
     setError('');
-
   };
 
   const handleCopySummary = () => {
     navigator.clipboard.writeText(summary);
     setIsSummaryCopied(true);
-    setTimeout(() => setIsSummaryCopied(false), 2000); // Reset after 2 seconds
+    setTimeout(() => setIsSummaryCopied(false), 2000);
   };
 
   const handleFileUpload = async (event) => {
@@ -59,12 +65,9 @@ const DocumentAnalyzer = () => {
 
     try {
       const response = await uploadDocumentApi(file);
-
-      // Accept multiple possible shapes from backend
       const receivedSummary = response?.summary ?? response?.data?.summary ?? '';
       const receivedSessionId = response?.session_id ?? response?.sessionId ?? null;
 
-      // If backend didn't provide a session id, create a client-side one so chat works
       const finalSessionId = receivedSessionId ?? `local-${Date.now()}`;
       setSessionId(finalSessionId);
 
@@ -74,27 +77,25 @@ const DocumentAnalyzer = () => {
           {
             id: Date.now(),
             sender: 'AdvocAI',
-            message:
-              "Hi! I've analyzed your document. Feel free to ask me any questions about the terms, risks, or anything else you'd like to understand better.",
-            timestamp: new Date().toLocaleTimeString(),
+            message: "I've analyzed your document with full clause parsing. Feel free to ask about liabilities, governing law, risks, or key definitions.",
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           },
         ]);
       } else {
-        // If there's no summary but upload succeeded, show a friendly placeholder
-        setSummary(response?.summary_preview ?? response?.summaryPreview ?? 'No summary available');
+        setSummary(response?.summary_preview ?? response?.summaryPreview ?? 'No summary available.');
         setChatHistory([
           {
             id: Date.now(),
             sender: 'AdvocAI',
-            message: "Document uploaded successfully. Ask a question to start the analysis.",
-            timestamp: new Date().toLocaleTimeString(),
+            message: "Document uploaded successfully. Ask any question to start analyzing.",
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           },
         ]);
       }
+      fetchSessions();
     } catch (err) {
       console.error(err);
-      // better extraction of error text
-      const message = err?.response?.data?.error || err?.message || 'Failed to upload document';
+      const message = err?.response?.data?.error || err?.message || 'Failed to upload document.';
       setError(message);
       setUploadedFile(null);
     } finally {
@@ -123,7 +124,6 @@ const DocumentAnalyzer = () => {
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(file);
         fileInputRef.current.files = dataTransfer.files;
-        // reuse same handler shape
         handleFileUpload({ target: { files: dataTransfer.files } });
       }
     }
@@ -140,7 +140,7 @@ const DocumentAnalyzer = () => {
       id: Date.now(),
       sender: 'User',
       message: userMessage,
-      timestamp: new Date().toLocaleTimeString(),
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
     setChatHistory((prev) => [...prev, newUserMessage]);
@@ -154,7 +154,7 @@ const DocumentAnalyzer = () => {
           id: Date.now() + 1,
           sender: 'AdvocAI',
           message: aiText,
-          timestamp: new Date().toLocaleTimeString(),
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setChatHistory((prev) => [...prev, aiMessage]);
       }
@@ -162,7 +162,6 @@ const DocumentAnalyzer = () => {
       console.error(err);
       const message = err?.response?.data?.error || err?.message || 'Failed to send message';
       setError(message);
-      // remove the optimistic user message
       setChatHistory((prev) => prev.filter((m) => m.id !== newUserMessage.id));
     } finally {
       setLoading(false);
@@ -196,7 +195,6 @@ const DocumentAnalyzer = () => {
   const openSession = async (session) => {
     if (!session) return;
     setSessionId(session.id ?? session._id ?? `session-${Date.now()}`);
-    setSidebarOpen(false);
     setLoading(true);
     try {
       const data = await getChatHistoryApi(session.id ?? session._id ?? session.sessionId);
@@ -207,7 +205,7 @@ const DocumentAnalyzer = () => {
         id: m.id ?? m._id ?? idx + 1,
         sender: (m.sender || m.role || '').toLowerCase() === 'user' ? 'User' : 'AdvocAI',
         message: m.text || m.message || '',
-        timestamp: m.timestamp ? new Date(m.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString(),
+        timestamp: m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       }));
 
       setChatHistory(messages);
@@ -233,305 +231,397 @@ const DocumentAnalyzer = () => {
 
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
 
-    return date.toLocaleDateString();
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   return (
-    <div className="flex h-[89vh] bg-background">
-      {/* Animated background effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-48 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-        <div
-          className="absolute bottom-1/4 -right-48 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse"
-          style={{ animationDelay: '1s' }}
-        />
-      </div>
+    <div className="flex h-[calc(100vh-5.5rem)] px-4 sm:px-6 lg:px-8 pb-4 max-w-7xl mx-auto gap-4 relative">
 
-      {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 h-full relative z-10`}>
-        <div className={`${sidebarOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300 bg-card/60 backdrop-blur-xl border-r border-border/50 flex flex-col h-full`}>
-          {sidebarOpen && (
-            <>
-              <div className="p-6 border-b border-border/50 flex-shrink-0">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-br from-primary to-secondary rounded-lg">
-                      <History className="w-5 h-5 text-foreground" />
-                    </div>
-                    <h2 className="text-lg font-semibold text-foreground">History</h2>
-                  </div>
-                  <button onClick={() => setSidebarOpen(false)} className="p-1.5 hover:bg-muted rounded-lg transition-colors">
-                    <X className="w-5 h-5 text-muted-foreground" />
-                  </button>
-                </div>
-                <p className="text-sm text-muted-foreground">Previous sessions</p>
+      {/* Frosted History Sidebar */}
+      <aside
+        className={`${
+          sidebarOpen ? 'w-72 lg:w-80' : 'w-0'
+        } transition-all duration-300 h-full relative z-20 flex-shrink-0 overflow-hidden`}
+      >
+        <div className="h-full glass-panel glass-reactive rounded-[2rem] border border-white/25 p-4 flex flex-col shadow-fluffy overflow-hidden">
+          {/* Sidebar Header */}
+          <div className="relative z-10 flex items-center justify-between pb-4 border-b border-white/15 flex-shrink-0 px-1">
+            <div className="flex items-center gap-2.5">
+              <div className="glass-circle w-9 h-9">
+                <History className="w-4 h-4 text-cyan-300" />
               </div>
+              <div>
+                <h2 className="text-sm font-bold text-white tracking-wide font-display">Analysis Sessions</h2>
+                <p className="text-[11px] text-slate-300/80">Past document reviews</p>
+              </div>
+            </div>
 
-              <div className="h-[70vh] overflow-y-auto p-4 custom-scrollbar">
-                {loadingSessions ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                  </div>
-                ) : sessions.length > 0 ? (
-                  <div className="space-y-2">
-                    {sessions.map((session) => (
-                      <button
-                        key={session.id ?? session._id}
-                        onClick={() => openSession(session)}
-                        className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${
-                          sessionId === (session.id ?? session._id)
-                            ? 'bg-gradient-to-br from-primary/20 to-secondary/20 border-primary/50 shadow-lg shadow-primary/20'
-                            : 'bg-card/40 border-border/50 hover:bg-card/60 hover:border-border'
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <FileText className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-foreground font-medium line-clamp-2 mb-2">{session.summary_preview || session.title || 'Document Analysis'}</p>
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-muted-foreground">{formatDate(session.created_at || session.createdAt || session.date)}</span>
-                              {Number(session.message_count || session.messages_count || 0) > 0 && (
-                                <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full">{session.message_count || session.messages_count}</span>
-                              )}
-                            </div>
-                          </div>
+            <Button
+              type="button"
+              onClick={() => setSidebarOpen(false)}
+              variant="glass-circle"
+              size="icon-sm"
+              className="w-7 h-7 text-slate-300 hover:text-white"
+              title="Close Sidebar"
+            >
+              <ChevronLeft size={16} />
+            </Button>
+          </div>
+
+          {/* New Document Button */}
+          <div className="relative z-10 pt-3 pb-2 flex-shrink-0">
+            <Button
+              onClick={resetForNewDocument}
+              variant="aurora"
+              className="w-full h-10 px-4 text-xs"
+            >
+              <Plus size={15} className="text-cyan-300" />
+              <span>New Analysis</span>
+            </Button>
+          </div>
+
+          {/* Sessions List */}
+          <div className="relative z-10 flex-1 overflow-y-auto space-y-2 py-2 pr-1 custom-scrollbar">
+            {loadingSessions ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-5 h-5 animate-spin text-cyan-400" />
+              </div>
+            ) : sessions.length > 0 ? (
+              sessions.map((session) => {
+                const isSelected = sessionId === (session.id ?? session._id);
+                return (
+                  <button
+                    key={session.id ?? session._id}
+                    onClick={() => openSession(session)}
+                    className={`w-full text-left p-3.5 rounded-2xl transition-all duration-300 ease-fluffy block group ${
+                      isSelected
+                        ? "bg-white/22 border border-white/45 shadow-[inset_0_2px_2px_rgba(255,255,255,0.75),0_8px_20px_rgba(0,212,255,0.22)] text-white scale-[1.01]"
+                        : "glass-subtle hover:bg-white/12 hover:border-white/25 text-slate-300"
+                    }`}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <FileText className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isSelected ? "text-cyan-300" : "text-slate-400 group-hover:text-cyan-300"}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold truncate leading-tight mb-1 text-slate-100">
+                          {session.summary_preview || session.title || 'Document Analysis'}
+                        </p>
+                        <div className="flex items-center justify-between text-[11px] text-slate-400">
+                          <span>{formatDate(session.created_at || session.createdAt || session.date)}</span>
+                          {Number(session.message_count || session.messages_count || 0) > 0 && (
+                            <span className="glass-pill px-2 py-0.2 text-[10px] text-cyan-300">
+                              {session.message_count || session.messages_count} msgs
+                            </span>
+                          )}
                         </div>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <div className="p-4 bg-card/40 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                      <History className="w-8 h-8 text-muted-foreground" />
+                      </div>
                     </div>
-                    <p className="text-muted-foreground text-sm mb-1">No previous sessions</p>
-                    <p className="text-muted-foreground text-xs">Upload a document to start</p>
-                  </div>
-                )}
+                  </button>
+                );
+              })
+            ) : (
+              <div className="text-center py-16 px-4">
+                <div className="glass-circle w-12 h-12 mx-auto mb-3">
+                  <FileText className="w-5 h-5 text-slate-300" />
+                </div>
+                <p className="text-xs font-semibold text-slate-200">No session history</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Upload a document to begin</p>
               </div>
-            </>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      </aside>
 
-      {/* Sidebar toggle button */}
+      {/* Floating Sidebar Toggle when closed */}
       {!sidebarOpen && (
-        <button
+        <Button
+          type="button"
           onClick={() => setSidebarOpen(true)}
-          className="fixed left-0 top-1/2 -translate-y-1/2 p-3 bg-gradient-to-r from-primary to-secondary text-foreground rounded-r-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-200 z-20"
+          variant="glass-circle"
+          size="icon"
+          className="fixed left-4 top-24 z-30 w-10 h-10 text-white shadow-xl"
+          title="Open Session History"
         >
-          <History className="w-5 h-5" />
-        </button>
+          <History className="w-5 h-5 text-cyan-300" />
+        </Button>
       )}
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="max-w-7xl mx-auto p-6 lg:p-12 flex-1 flex flex-col w-full h-full">
-          {/* Upload / Summary header */}
-          {!summary ? (
-            <div className="mb-8">
-              <div
-                className={`relative overflow-hidden rounded-2xl border-2 border-dashed transition-all duration-300 ${
-                  dragActive ? 'border-primary bg-primary/10 scale-[1.02]' : uploadedFile ? 'border-accent/50 bg-card/40' : 'border-border/20 hover:border-border hover:bg-card/30'
-                }`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => !uploading && fileInputRef.current && fileInputRef.current.click()}
-              >
-                <input
-                  id="file-upload"
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,.docx,.txt"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  disabled={uploading}
-                />
+      {/* Main Glass Workspace */}
+      <div className="flex-1 flex flex-col h-full min-w-0">
+        {!summary ? (
+          /* Full Page Fluffy Glass Upload Sanctuary */
+          <div className="h-full flex items-center justify-center p-4">
+            <div
+              className={`w-full max-w-2xl glass-panel glass-reactive p-10 sm:p-14 rounded-[2.75rem] border-2 border-dashed transition-all duration-300 text-center cursor-pointer shadow-fluffy ${
+                dragActive
+                  ? "border-cyan-300 bg-white/22 scale-[1.025] shadow-[0_0_45px_rgba(0,212,255,0.45)]"
+                  : uploadedFile
+                  ? "border-cyan-300/60 bg-white/12"
+                  : "border-white/30 hover:border-cyan-300/60"
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => !uploading && fileInputRef.current && fileInputRef.current.click()}
+            >
+              <input
+                id="file-upload"
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.docx,.txt"
+                onChange={handleFileUpload}
+                className="hidden"
+                disabled={uploading}
+              />
 
-                <div className="px-6 pts-8 sm:p-10 lg:p-12 text-center cursor-pointer">
-                  {uploading ? (
-                    <div className="space-y-4">
-                      <div className="relative w-16 h-16 mx-auto">
-                        <Loader2 className="w-16 h-16 text-primary animate-spin" />
-                        <Sparkles className="w-6 h-6 text-secondary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-                      </div>
-                      <div>
-                        <p className="text-lg font-medium text-foreground mb-1">Analyzing your document...</p>
-                        <p className="text-sm text-muted-foreground">This may take a moment</p>
-                      </div>
+              {uploading ? (
+                <div className="relative z-10 space-y-4 py-6">
+                  <div className="relative w-20 h-20 mx-auto flex items-center justify-center">
+                    <Loader2 className="w-16 h-16 text-cyan-300 animate-spin" />
+                    <Sparkles className="w-7 h-7 text-amber-300 absolute" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-extrabold text-white mb-1 font-display">
+                      Refracting & Analyzing Clauses...
+                    </h3>
+                    <p className="text-sm text-slate-300/85">
+                      Our neural legal model is scanning definitions, covenants, and risk vectors.
+                    </p>
+                  </div>
+                </div>
+              ) : uploadedFile ? (
+                <div className="relative z-10 space-y-4 py-6">
+                  <div className="glass-circle w-20 h-20 mx-auto shadow-glass-glow">
+                    <FileText className="w-10 h-10 text-cyan-300" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white mb-1">{uploadedFile.name}</h3>
+                    <p className="text-xs font-bold text-emerald-300 uppercase tracking-wider">
+                      ✓ Ready for parsing
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="relative z-10 space-y-6 py-4">
+                  <div className="glass-circle w-24 h-24 mx-auto shadow-[inset_0_2px_4px_rgba(255,255,255,0.95),0_18px_40px_rgba(0,212,255,0.38)] animate-bubble-breathe">
+                    <Upload className="w-10 h-10 text-cyan-300" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight font-display">
+                      Drop legal document here
+                    </h3>
+                    <p className="text-sm text-slate-300/85 max-w-md mx-auto">
+                      Click to browse or drop contracts to extract instant clause summaries, liability warnings, and interactive Q&A.
+                    </p>
+                  </div>
+
+                  <div className="flex justify-center">
+                    <Button
+                      type="button"
+                      variant="aurora"
+                      size="lg"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fileInputRef.current?.click();
+                      }}
+                      className="h-11 px-7 text-xs"
+                    >
+                      <Upload className="w-4 h-4 text-cyan-300" />
+                      <span>Browse Contract File</span>
+                    </Button>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                    <span className="text-xs text-slate-400 mr-1">Compatible formats:</span>
+                    <span className="glass-pill px-3 py-1 text-xs font-bold text-white">PDF</span>
+                    <span className="glass-pill px-3 py-1 text-xs font-bold text-white">DOCX</span>
+                    <span className="glass-pill px-3 py-1 text-xs font-bold text-white">TXT</span>
+                  </div>
+                </div>
+              )}
+
+              {error && (
+                <div className="relative z-10 mt-6 p-3 rounded-2xl bg-rose-500/20 border border-rose-400/40 text-rose-200 text-xs">
+                  {error}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Dual-Column Analysis & Interactive Glass Q&A */
+          <div className="grid lg:grid-cols-12 gap-4 h-full min-h-0">
+
+            {/* Left Glass Column: Analysis Summary */}
+            <div className="lg:col-span-5 flex flex-col h-full min-h-0">
+              <div className="glass-panel glass-reactive rounded-[2rem] border border-white/25 flex flex-col h-full shadow-fluffy overflow-hidden">
+
+                {/* Header */}
+                <div className="relative z-10 p-4 sm:p-5 border-b border-white/15 flex items-center justify-between flex-shrink-0 bg-white/[0.04]">
+                  <div className="flex items-center gap-2.5">
+                    <div className="glass-circle w-9 h-9">
+                      <Sparkles className="w-4 h-4 text-cyan-300" />
                     </div>
-                  ) : uploadedFile ? (
-                    <div className="space-y-4">
-                      <div className="p-4 bg-accent/20 rounded-full w-20 h-20 mx-auto flex items-center justify-center border border-accent/30">
-                        <FileText className="w-10 h-10 text-accent" />
-                      </div>
-                      <div>
-                        <p className="text-lg font-medium text-foreground mb-1">{uploadedFile.name}</p>
-                        <p className="text-sm text-accent">✓ Ready for analysis</p>
-                      </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-white font-display">AI Clause Intelligence</h3>
+                      <p className="text-[11px] text-slate-300/80">Risk detection & plain-English summary</p>
                     </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="relative w-20 h-20 mx-auto">
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary to-secondary rounded-2xl opacity-20 blur-xl" />
-                        <div className="relative p-4 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl border border-primary/30">
-                          <Upload className="w-12 h-12 text-primary" />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={handleCopySummary}
+                      size="sm"
+                      variant={isSummaryCopied ? "emerald" : "glass"}
+                      className="h-8 px-3.5 text-xs"
+                      title="Copy Analysis"
+                    >
+                      {isSummaryCopied ? (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5 text-cyan-300" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Summary Scrollable Text */}
+                <div className="relative z-10 flex-1 overflow-y-auto p-5 custom-scrollbar text-slate-100 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
+                  {summary}
+                </div>
+
+                {/* Bottom Bar: Action Pill */}
+                <div className="relative z-10 p-3.5 border-t border-white/15 flex justify-between items-center bg-white/[0.03]">
+                  <span className="text-[11px] text-slate-300/85 flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
+                    Verified by AdvocAI Engine
+                  </span>
+                  <Button
+                    onClick={resetForNewDocument}
+                    size="sm"
+                    variant="glass"
+                    className="h-8 px-3.5 text-xs text-slate-100"
+                  >
+                    Analyze Another
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Glass Column: Chat & Q&A */}
+            <div className="lg:col-span-7 flex flex-col h-full min-h-0">
+              <div className="glass-panel glass-reactive rounded-[2rem] border border-white/25 flex flex-col h-full shadow-fluffy overflow-hidden">
+
+                {/* Chat Header */}
+                <div className="relative z-10 p-4 sm:p-5 border-b border-white/15 flex items-center justify-between flex-shrink-0 bg-white/[0.04]">
+                  <div className="flex items-center gap-2.5">
+                    <div className="glass-circle w-9 h-9">
+                      <MessageCircle className="w-4 h-4 text-cyan-300" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-white font-display">Ask AdvocAI</h3>
+                      <p className="text-[11px] text-slate-300/80">Inquire about liabilities, indemnities, or termination clauses</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Messages Stream */}
+                <div className="relative z-10 flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 custom-scrollbar">
+                  {chatHistory.map((message) => {
+                    const isUser = message.sender === 'User';
+                    return (
+                      <div
+                        key={message.id}
+                        className={`flex items-end gap-2.5 ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in`}
+                      >
+                        {!isUser && (
+                          <div className="glass-circle w-8 h-8 flex-shrink-0 mb-1">
+                            <Bot className="w-4 h-4 text-cyan-300" />
+                          </div>
+                        )}
+
+                        <div className="max-w-[82%] sm:max-w-[75%]">
+                          <div
+                            className={`px-4 py-3 text-xs sm:text-sm leading-relaxed ${
+                              isUser
+                                ? "rounded-3xl rounded-br-md bg-gradient-to-r from-cyan-500/80 to-blue-600/80 text-white border border-white/45 shadow-[inset_0_2px_2px_rgba(255,255,255,0.75),0_8px_20px_rgba(0,212,255,0.35)]"
+                                : "glass-subtle rounded-3xl rounded-bl-md p-4 text-slate-100 border-white/25"
+                            }`}
+                          >
+                            <p className="whitespace-pre-wrap">{message.message}</p>
+                          </div>
+                          <span className={`text-[10px] text-slate-400/85 mt-1 block px-1 ${isUser ? 'text-right' : 'text-left'}`}>
+                            {message.timestamp}
+                          </span>
                         </div>
+
+                        {isUser && (
+                          <div className="glass-circle w-8 h-8 flex-shrink-0 mb-1">
+                            <User className="w-3.5 h-3.5 text-white" />
+                          </div>
+                        )}
                       </div>
-                      <div>
-                        <p className="text-lg font-medium text-foreground mb-2">Drop your document here</p>
-                        <p className="text-sm text-muted-foreground mb-4">or click to browse your files</p>
-                        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                          <span>Supports:</span>
-                          <span className="px-2 py-1 bg-card/50 rounded">PDF</span>
-                          <span className="px-2 py-1 bg-card/50 rounded">DOCX</span>
-                          <span className="px-2 py-1 bg-card/50 rounded">TXT</span>
-                        </div>
+                    );
+                  })}
+
+                  {loading && (
+                    <div className="flex items-center gap-2.5">
+                      <div className="glass-circle w-8 h-8">
+                        <Bot className="w-4 h-4 text-cyan-300" />
+                      </div>
+                      <div className="glass-pill px-4 py-2.5 flex items-center gap-2 text-xs text-slate-200">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-300" />
+                        <span>AdvocAI is formulating clause insights...</span>
                       </div>
                     </div>
                   )}
                 </div>
 
-                {error && (
-                  <div className="mt-4 p-4 bg-destructive/10 border border-destructive/30 rounded-xl">
-                    <p className="text-destructive text-sm">{error}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="mb-8 flex items-center justify-between">
-              <div className="text-left">
-                <h2 className="text-xl font-semibold text-foreground">Summary & Q&A</h2>
-                <p className="text-sm text-muted-foreground">Your analysis is ready. Ask follow-up questions or start a new summary.</p>
-              </div>
-              <button
-                onClick={resetForNewDocument}
-                className="px-4 py-2 bg-gradient-to-r from-primary to-secondary text-foreground rounded-xl font-medium hover:shadow-lg hover:shadow-primary/30 transition-all duration-200"
-              >
-                Summarize New Document
-              </button>
+                {/* Floating Glass Input Bar */}
+                <div className="relative z-10 p-3 sm:p-4 border-t border-white/15 bg-white/[0.03]">
+                  <div className="flex items-center gap-2.5">
+                    <input
+                      type="text"
+                      value={chatMessage}
+                      onChange={(e) => setChatMessage(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Ask any question about this document..."
+                      disabled={!sessionId || loading}
+                      className="glass-input flex-1 h-11 px-5 text-xs sm:text-sm rounded-full"
+                    />
 
-            </div>
-          )}
-
-          {/* Analysis & Chat Grid */}
-          {summary && (
-            <div className="grid lg:grid-cols-5 gap-6 h-[60vh]">
-              {/* Analysis Results */}
-             
-
-              {/* Chat Interface */}
-              <div className="lg:col-span-3 flex flex-col h-[60vh]">
-                <div className="bg-card/40 backdrop-blur-xl rounded-2xl border border-border/50 overflow-hidden flex flex-col h-full">
-                  <div className="p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-secondary/5 flex-shrink-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2 bg-gradient-to-br from-primary to-secondary rounded-lg">
-                        <MessageCircle className="w-5 h-5 text-foreground" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-foreground">Ask Questions</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground">Chat with AI about your document</p>
-                  </div>
-
-                  {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-6 pt-8 space-y-4 custom-scrollbar">
-                    {chatHistory.map((message) => (
-                      <div key={message.id} className={`flex items-start gap-3 ${message.sender === 'User' ? 'justify-end' : 'justify-start'} animate-fade-in`}>
-                        {message.sender !== 'User' && (
-                          <div className="w-8 h-8 rounded-full bg-card flex items-center justify-center flex-shrink-0">
-                            <Bot className="w-5 h-5 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div className={`max-w-[80%]`}>
-                          <div className={`rounded-2xl px-4 py-3 ${
-                            message.sender === 'User' ? 'bg-gradient-to-br from-primary to-secondary text-foreground shadow-lg shadow-primary/20' : 'bg-card/50 text-foreground border border-border/50'
-                          }`}>
-                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.message}</p>
-                          </div>
-                        </div>
-                        {message.sender === 'User' && (
-                          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                            <User className="w-5 h-5 text-foreground" />
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    {loading && (
-                      <div className="flex justify-start">
-                        <div className="bg-card/50 border border-border/50 px-4 py-3 rounded-2xl flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                          <span className="text-sm text-muted-foreground">Thinking...</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Input */}
-                  <div className="p-6 border-t border-border/50 bg-card/30 flex-shrink-0">
-                    <div className="flex gap-3">
-                      <input
-                        type="text"
-                        value={chatMessage}
-                        onChange={(e) => setChatMessage(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder="Ask anything about your document..."
-                        disabled={!sessionId || loading}
-                        className="flex-1 px-4 py-3 bg-card/50 border border-border/50 rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                      />
-                      <button
-                        onClick={handleSendMessage}
-                        disabled={!sessionId || !chatMessage.trim() || loading}
-                        className="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-foreground rounded-xl font-medium hover:shadow-lg hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2"
-                      >
-                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-5 h-5" /><span>Send</span></>}
-                      </button>
-                    </div>
+                    <Button
+                      type="button"
+                      onClick={handleSendMessage}
+                      disabled={!sessionId || !chatMessage.trim() || loading}
+                      variant="default"
+                      size="icon"
+                      className="w-11 h-11 flex-shrink-0"
+                      title="Send Message"
+                    >
+                      {loading ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                      ) : (
+                        <Send className="w-4 h-4 text-slate-950" />
+                      )}
+                    </Button>
                   </div>
                 </div>
-              </div>
 
-               <div className="lg:col-span-2 flex flex-col min-h-0">
-                <div className="bg-card/40 backdrop-blur-xl rounded-2xl border border-border/50 overflow-hidden flex flex-col">
-                  <div className="p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-secondary/5 flex-shrink-0">
-                    <div className="flex items-center justify-between mb-2"> {/* Added justify-between here */}
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-gradient-to-br from-primary to-secondary rounded-lg">
-                          <Bot className="w-5 h-5 text-foreground" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-foreground">Analysis</h3>
-                      </div>
-                      <button
-                        onClick={handleCopySummary}
-                        className="px-3 py-1.5 bg-gradient-to-r from-primary to-secondary text-foreground rounded-lg font-medium hover:shadow-lg hover:shadow-primary/30 transition-all duration-200 flex items-center gap-2 text-sm"
-                      >
-                        {isSummaryCopied ? (
-                          <>
-                            <Check className="w-4 h-4" />
-                            <span>Copied!</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-4 h-4" />
-                            <span>Copy Analysis</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                    <p className="text-sm text-muted-foreground">AI-generated insights</p>
-                  </div>
-                  <div className="p-6 flex-1 overflow-y-auto custom-scrollbar">
-                    <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap mb-4">{summary}</p>
-                  </div>
-                </div>
               </div>
             </div>
-          )}
-        </div>
+
+          </div>
+        )}
       </div>
+
     </div>
   );
 };

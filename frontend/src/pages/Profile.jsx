@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { User, Mail, Camera, Edit2, Check, X, Sparkles } from "lucide-react";
+import { User, Mail, Camera, Edit2, Check, X, Sparkles, AtSign } from "lucide-react";
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import axios from '../api/axios';
+import { Button } from "@/Components/ui/button";
+import { Input } from "@/Components/ui/Input";
 
 const Profile = () => {
   const { user, loading, setUser } = useAuth();
@@ -11,14 +13,14 @@ const Profile = () => {
     username: '',
     email: '',
     profile_picture: '',
-    cover_photo: '', // Added cover_photo
+    cover_photo: '',
     new_profile_picture: null,
-    new_cover_photo: null, // Added new_cover_photo
+    new_cover_photo: null,
   });
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
-  const [previewCoverImage, setPreviewCoverImage] = useState(null); // Added previewCoverImage
+  const [previewCoverImage, setPreviewCoverImage] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -27,7 +29,7 @@ const Profile = () => {
         username: user.username || '',
         email: user.email || '',
         profile_picture: user.profile_picture || '',
-        cover_photo: user.cover_photo || '', // Initialize cover_photo
+        cover_photo: user.cover_photo || '',
         new_profile_picture: null,
         new_cover_photo: null,
       });
@@ -51,7 +53,6 @@ const Profile = () => {
   };
 
   const handleCoverFileChange = (e) => {
-    console.log('handleCoverFileChange called'); // Debugging line
     const file = e.target.files[0];
     if (file) {
       setProfileData({ ...profileData, new_cover_photo: file });
@@ -71,19 +72,19 @@ const Profile = () => {
       if (profileData.new_profile_picture) {
         formData.append('profile_picture', profileData.new_profile_picture);
       }
-      if (profileData.new_cover_photo) { // Added new_cover_photo
+      if (profileData.new_cover_photo) {
         formData.append('cover_photo', profileData.new_cover_photo);
       }
 
       const response = await axios.patch('api/auth/profile/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      
+
       toast.success('Profile updated successfully!');
       setUser(response.data);
       setIsEditing(false);
       setPreviewImage(null);
-      setPreviewCoverImage(null); // Reset previewCoverImage
+      setPreviewCoverImage(null);
     } catch (error) {
       console.error('Failed to update profile:', error);
       toast.error(error.response?.data?.error || 'Failed to update profile.');
@@ -95,14 +96,14 @@ const Profile = () => {
   const handleCancel = () => {
     setIsEditing(false);
     setPreviewImage(null);
-    setPreviewCoverImage(null); // Reset previewCoverImage
+    setPreviewCoverImage(null);
     if (user) {
       setProfileData({
         name: user.name || '',
         username: user.username || '',
         email: user.email || '',
         profile_picture: user.profile_picture || '',
-        cover_photo: user.cover_photo || '', // Reset cover_photo
+        cover_photo: user.cover_photo || '',
         new_profile_picture: null,
         new_cover_photo: null,
       });
@@ -110,16 +111,16 @@ const Profile = () => {
   };
 
   const getInitials = (name) => {
-    if (!name) return '';
+    if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading profile...</p>
+      <div className="min-h-[calc(100vh-5.5rem)] flex items-center justify-center">
+        <div className="glass-panel p-8 rounded-[2rem] text-center">
+          <div className="w-10 h-10 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-xs text-slate-300">Loading profile attributes...</p>
         </div>
       </div>
     );
@@ -127,12 +128,10 @@ const Profile = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="p-4 bg-destructive/10 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-            <User className="w-10 h-10 text-destructive" />
-          </div>
-          <p className="text-destructive text-lg">Please log in to view your profile.</p>
+      <div className="min-h-[calc(100vh-5.5rem)] flex items-center justify-center p-4">
+        <div className="glass-panel p-8 rounded-[2rem] text-center max-w-sm">
+          <User className="w-10 h-10 text-rose-400 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-white">Please sign in to view your profile.</p>
         </div>
       </div>
     );
@@ -141,196 +140,181 @@ const Profile = () => {
   const displayImage = previewImage || profileData.profile_picture;
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 relative overflow-hidden">
-      {/* Animated background effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-48 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 -right-48 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+    <div className="min-h-[calc(100vh-5.5rem)] px-4 sm:px-6 lg:px-8 py-8 max-w-4xl mx-auto">
+      {/* Header Badge */}
+      <div className="text-center mb-8 space-y-2 animate-fade-in">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 glass-pill mb-1">
+          <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
+          <span className="text-xs font-bold text-cyan-200 uppercase tracking-wider">
+            Identity & Preferences
+          </span>
+        </div>
+        <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight font-display">
+          Account Profile
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-300/80">
+          Manage your verified credentials and appearance
+        </p>
       </div>
 
-      <div className="max-w-4xl mx-auto relative z-10">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-full border border-primary/20 mb-4">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Your Profile
-            </span>
-          </div>
-          <h1 className="text-4xl font-bold text-foreground mb-2">Account Settings</h1>
-          <p className="text-muted-foreground">Manage your personal information</p>
+      {/* Main Fluffy Glass Profile Card */}
+      <div className="glass-panel glass-reactive rounded-[2.5rem] border border-white/30 overflow-hidden shadow-fluffy">
+
+        {/* Cover Photo Area with Glossy Glass Sheen */}
+        <div className="h-44 sm:h-52 relative overflow-hidden bg-gradient-to-r from-cyan-500/25 via-indigo-500/25 to-purple-500/25">
+          {profileData.cover_photo || previewCoverImage ? (
+            <img
+              src={previewCoverImage || profileData.cover_photo}
+              alt="Cover"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="glass-pill px-4 py-1 text-xs font-bold text-white/75 uppercase tracking-widest">
+                AdvocAI Workspace
+              </span>
+            </div>
+          )}
+
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent" />
+
+          {isEditing && (
+            <label
+              htmlFor="cover-photo-upload"
+              className="absolute bottom-4 right-4 glass-pill px-4 py-1.5 cursor-pointer text-xs font-semibold text-white flex items-center gap-1.5 shadow-lg z-20"
+            >
+              <Camera className="w-3.5 h-3.5 text-cyan-300" />
+              <span>Change Cover</span>
+              <input
+                id="cover-photo-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleCoverFileChange}
+              />
+            </label>
+          )}
         </div>
 
-        {/* Profile Card */}
-        <div className="bg-card/40 backdrop-blur-xl rounded-3xl border border-border/50 overflow-hidden shadow-2xl">
-          {/* Cover Image */}
-          <div className="h-48 relative group"> {/* Increased height for cover photo */}
-            {profileData.cover_photo || previewCoverImage ? (
-              <img 
-                src={previewCoverImage || profileData.cover_photo} 
-                alt="Cover" 
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-r from-primary via-secondary to-accent flex items-center justify-center">
-                <span className="text-foreground text-xl font-semibold">No Cover Photo</span>
-              </div>
-            )}
-            
-            <div className="absolute inset-0 bg-black/20"></div> {/* Overlay for gradient effect */}
-            {isEditing && (
-              <label 
-                htmlFor="cover-photo-upload" 
-                className="absolute bottom-4 right-4 p-2.5 bg-input/70 rounded-xl cursor-pointer hover:bg-input transition-all duration-200 flex items-center gap-2 text-foreground text-sm font-medium z-10" // Added z-10
-              >
-                <Camera className="w-4 h-4" />
-                Change Cover
-                <input 
-                  id="cover-photo-upload" 
-                  type="file" 
-                  accept="image/*" 
-                  className="hidden" 
-                  onChange={handleCoverFileChange} 
-                />
-              </label>
-            )}
-          </div>
+        {/* Content Area */}
+        <div className="relative z-10 px-6 sm:px-10 pb-10">
 
-          {/* Profile Content */}
-          <div className="px-8 pb-8">
-            {/* Avatar Section */}
-            <div className="relative -mt-16 mb-6">
-              <div className="relative inline-block">
-                <div className="w-32 h-32 rounded-2xl bg-background border-4 border-border overflow-hidden shadow-xl">
-                  {displayImage ? (
-                    <img 
-                      src={displayImage} 
-                      alt="Profile" 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                      <span className="text-foreground text-3xl font-bold">
-                        {getInitials(profileData.name || profileData.username)}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                
-                {isEditing && (
-                  <label 
-                    htmlFor="profile-picture-upload" 
-                    className="absolute bottom-2 right-2 p-2.5 bg-gradient-to-br from-primary to-secondary rounded-xl cursor-pointer hover:shadow-lg hover:shadow-primary/30 transition-all duration-200 group"
-                  >
-                    <Camera className="w-4 h-4 text-foreground group-hover:scale-110 transition-transform" />
-                    <input 
-                      id="profile-picture-upload" 
-                      type="file" 
-                      accept="image/*" 
-                      className="hidden" 
-                      onChange={handleProfileFileChange} 
-                    />
-                  </label>
-                )}
-              </div>
-
-              {/* Edit Button (Top Right) */}
-              {!isEditing && (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="absolute right-0 top-0 px-4 py-2 bg-input/50 hover:bg-input border border-border/50 rounded-xl text-foreground text-sm font-medium transition-all duration-200 flex items-center gap-2 group"
-                >
-                  <Edit2 className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                  Edit Profile
-                </button>
-              )}
-            </div>
-
-            {/* Profile Info */}
-            <div className="space-y-6">
-              {/* Name Field */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <User className="w-4 h-4 text-primary" />
-                  Full Name
-                </label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    name="name"
-                    value={profileData.name}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-input border border-border/50 rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                    placeholder="Enter your full name"
+          {/* Avatar Section Overlap */}
+          <div className="relative -mt-16 sm:-mt-20 mb-6 flex flex-col sm:flex-row items-center sm:items-end justify-between gap-4">
+            <div className="relative inline-block">
+              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full glass-circle p-1.5 border-2 border-white/60 shadow-glass-glow bg-slate-900/75 overflow-hidden">
+                {displayImage ? (
+                  <img
+                    src={displayImage}
+                    alt="Profile"
+                    className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
-                  <div className="px-4 py-3 bg-input/30 border border-border/50 rounded-xl">
-                    <p className="text-foreground text-lg font-medium">
-                      {profileData.name || 'Not provided'}
-                    </p>
+                  <div className="w-full h-full rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-white font-black text-2xl sm:text-3xl">
+                    {getInitials(profileData.name || profileData.username)}
                   </div>
                 )}
               </div>
 
-              {/* Username Field */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <User className="w-4 h-4 text-secondary" />
-                  Username
+              {isEditing && (
+                <label
+                  htmlFor="profile-picture-upload"
+                  className="absolute bottom-1 right-1 glass-circle w-9 h-9 cursor-pointer text-white shadow-xl hover:scale-110"
+                  title="Upload Avatar"
+                >
+                  <Camera className="w-4 h-4 text-cyan-300" />
+                  <input
+                    id="profile-picture-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleProfileFileChange}
+                  />
                 </label>
-                <div className="px-4 py-3 bg-input/30 border border-border/50 rounded-xl">
-                  <p className="text-muted-foreground flex items-center gap-2">
-                    <span className="text-muted-foreground">@</span>
-                    {profileData.username || 'Not provided'}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">Username cannot be changed</p>
-                </div>
-              </div>
+              )}
+            </div>
 
-              {/* Email Field */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-accent" />
-                  Email Address
-                </label>
-                <div className="px-4 py-3 bg-input/30 border border-border/50 rounded-xl">
-                  <p className="text-muted-foreground">{profileData.email || 'Not provided'}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Email is verified and cannot be changed</p>
+            {!isEditing && (
+              <Button
+                onClick={() => setIsEditing(true)}
+                variant="glass"
+                className="h-10 px-5 text-xs text-white"
+              >
+                <Edit2 className="w-3.5 h-3.5 text-cyan-300" />
+                <span>Edit Profile</span>
+              </Button>
+            )}
+          </div>
+
+          {/* Form Fields */}
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-200 pl-1 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-cyan-300" /> Full Name
+              </label>
+              {isEditing ? (
+                <Input
+                  type="text"
+                  name="name"
+                  value={profileData.name}
+                  onChange={handleInputChange}
+                  className="h-11 px-4 text-sm rounded-full"
+                  placeholder="Enter full name"
+                />
+              ) : (
+                <div className="glass-subtle p-3.5 px-5 rounded-2xl text-sm font-semibold text-white">
+                  {profileData.name || 'Not provided'}
                 </div>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-200 pl-1 flex items-center gap-1.5">
+                <AtSign className="w-3.5 h-3.5 text-amber-300" /> Username
+              </label>
+              <div className="glass-subtle p-3.5 px-5 rounded-2xl flex items-center justify-between text-sm text-slate-200">
+                <span>@{profileData.username || 'username'}</span>
+                <span className="text-[11px] text-slate-400 font-medium">Permanent handle</span>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            {isEditing && (
-              <div className="flex gap-3 mt-8 pt-6 border-t border-border/50">
-                <button
-                  onClick={handleCancel}
-                  disabled={saving}
-                  className="flex-1 px-6 py-3 bg-input/50 hover:bg-input border border-border/50 rounded-xl text-foreground font-medium transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <X className="w-4 h-4" />
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveProfile}
-                  disabled={saving}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 rounded-xl text-foreground font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/40 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {saving ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-foreground/30 border-t-foreground rounded-full animate-spin"></div>
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Check className="w-4 h-4" />
-                      Save Changes
-                    </>
-                  )}
-                </button>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-200 pl-1 flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-emerald-300" /> Email Address
+              </label>
+              <div className="glass-subtle p-3.5 px-5 rounded-2xl flex items-center justify-between text-sm text-slate-200">
+                <span>{profileData.email || 'Not provided'}</span>
+                <span className="glass-pill px-3 py-0.5 text-[10px] text-emerald-300 flex items-center gap-1">
+                  <Check className="w-3 h-3" /> Verified
+                </span>
               </div>
-            )}
+            </div>
           </div>
+
+          {/* Edit Buttons */}
+          {isEditing && (
+            <div className="flex gap-3 pt-6 mt-6 border-t border-white/15">
+              <Button
+                onClick={handleCancel}
+                disabled={saving}
+                variant="glass"
+                className="flex-1 h-11 text-xs text-slate-100"
+              >
+                <X className="w-3.5 h-3.5" />
+                <span>Cancel</span>
+              </Button>
+
+              <Button
+                onClick={handleSaveProfile}
+                disabled={saving}
+                variant="aurora"
+                className="flex-1 h-11 text-xs"
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          )}
+
         </div>
       </div>
     </div>

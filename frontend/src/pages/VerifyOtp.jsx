@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';
-import { Button } from "@/Components/ui/Button";
+import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/Input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/Components/ui/Card";
+import { ArrowLeft, ShieldCheck } from 'lucide-react';
 
 const VerifyOtp = () => {
   const location = useLocation();
@@ -13,9 +13,14 @@ const VerifyOtp = () => {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!email) {
+      toast.error('No email provided for OTP verification.');
+      navigate('/signup');
+    }
+  }, [email, navigate]);
+
   if (!email) {
-    toast.error('No email provided for OTP verification. Please sign up again.');
-    navigate('/signup');
     return null;
   }
 
@@ -48,56 +53,74 @@ const VerifyOtp = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background relative overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent"></div>
-      <Card className="w-full max-w-md bg-card/40 backdrop-blur-sm border border-border/50 relative z-10 animate-fade-in">
-        <CardHeader className="text-center">
-          <div className="inline-flex items-center gap-2 mb-3 px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
-            <span className="text-primary text-xs font-medium">Email Verification</span>
-          </div>
-          <CardTitle className="text-3xl font-bold text-foreground mb-2">
-            Verify OTP
-          </CardTitle>
-          <CardDescription className="text-muted-foreground">
-            An OTP has been sent to <span className="font-medium text-primary">{email}</span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleVerifyOtp} className="space-y-6">
-            <div className="relative">
-              <Input
-                type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="000000"
-                maxLength="6"
-                className="w-full text-center text-2xl tracking-[0.5em] bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 font-mono"
-                required
-              />
-              <p className="text-xs text-muted-foreground mt-2 text-center">Enter the 6-digit code</p>
-            </div>
-            <Button
-              type="submit"
-              disabled={loading || otp.length !== 6}
-              className="w-full bg-primary hover:bg-primary/90 text-foreground transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Verifying...' : 'Verify Account'}
-            </Button>
-          </form>
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      <Button
+        type="button"
+        variant="glass"
+        size="sm"
+        onClick={() => navigate('/signup')}
+        className="absolute top-6 left-6 z-20 px-4 py-2 text-xs text-slate-100 group"
+      >
+        <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+        <span>Return</span>
+      </Button>
 
-          <div className="text-center mt-6">
-            <p className="text-sm text-muted-foreground mb-2">Didn't receive the code?</p>
-            <Button
-              variant="link"
-              onClick={handleResendOtp}
-              disabled={loading}
-              className="text-primary hover:text-primary/80 transition-colors duration-200"
-            >
-              Resend OTP
-            </Button>
+      <div className="w-full max-w-md glass-panel glass-reactive p-8 sm:p-10 rounded-[2.5rem] border border-white/30 shadow-fluffy relative z-10 space-y-6 animate-fade-in text-center">
+
+        <div className="relative z-10 space-y-2">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 glass-pill mb-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-cyan-300" />
+            <span className="text-xs font-bold text-cyan-200 uppercase tracking-wider">
+              Email Authentication
+            </span>
           </div>
-        </CardContent>
-      </Card>
+          <h1 className="text-3xl font-black text-white tracking-tight font-display">
+            Verify Your Code
+          </h1>
+          <p className="text-xs text-slate-300/80">
+            A 6-digit confirmation code was dispatched to{" "}
+            <span className="font-semibold text-cyan-300">{email}</span>
+          </p>
+        </div>
+
+        <form onSubmit={handleVerifyOtp} className="relative z-10 space-y-5">
+          <div>
+            <Input
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="000000"
+              maxLength="6"
+              className="h-14 text-center text-3xl tracking-[0.4em] font-mono rounded-full font-bold text-white"
+              required
+            />
+            <p className="text-[11px] text-slate-400 mt-2">Enter the 6 digits from your email</p>
+          </div>
+
+          <Button
+            type="submit"
+            variant="aurora"
+            disabled={loading || otp.length !== 6}
+            className="w-full h-12 text-xs uppercase tracking-wider"
+          >
+            {loading ? 'Validating Code...' : 'Confirm Account'}
+          </Button>
+        </form>
+
+        <div className="relative z-10 pt-2 border-t border-white/15 text-xs text-slate-300/80 flex items-center justify-center gap-2">
+          <span>Didn't receive the code?</span>
+          <Button
+            type="button"
+            variant="glass"
+            size="sm"
+            onClick={handleResendOtp}
+            disabled={loading}
+            className="h-7 px-3 text-[11px] text-cyan-300"
+          >
+            Resend Email
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

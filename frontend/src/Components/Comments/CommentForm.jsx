@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import axios from '../../api/axios'; // Assuming axios is configured here
+import axios from '../../api/axios';
+import { Button } from "@/Components/ui/button";
 
 const CommentForm = ({ documentId, parentCommentId = null, onCommentAdded, placeholder = "Add a comment..." }) => {
   const [content, setContent] = useState('');
@@ -18,7 +19,6 @@ const CommentForm = ({ documentId, parentCommentId = null, onCommentAdded, place
         document_id: documentId,
         content: content,
         parent_comment: parentCommentId,
-        // position: {} // Add position data if available from the document editor
       };
       await axios.post(`/api/documents/${documentId}/comments/`, payload);
       setContent('');
@@ -34,23 +34,25 @@ const CommentForm = ({ documentId, parentCommentId = null, onCommentAdded, place
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mb-4">
+    <form onSubmit={handleSubmit} className="mb-3 space-y-2.5">
       <textarea
-        className="w-full p-2 border border-border/50 rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-input text-foreground placeholder-muted-foreground"
-        rows="3"
+        className="glass-input w-full p-3.5 rounded-2xl text-xs text-white placeholder:text-slate-400 resize-none outline-none"
+        rows="2"
         placeholder={placeholder}
         value={content}
         onChange={(e) => setContent(e.target.value)}
         disabled={loading}
-      ></textarea>
-      {error && <p className="text-destructive text-sm mt-1">{error}</p>}
-      <button
+      />
+      {error && <p className="text-rose-400 text-[11px]">{error}</p>}
+      <Button
         type="submit"
-        className="mt-2 px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-md hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-        disabled={loading}
+        size="sm"
+        variant="default"
+        className="h-8 px-4 text-xs"
+        disabled={loading || !content.trim()}
       >
         {loading ? 'Posting...' : 'Post Comment'}
-      </button>
+      </Button>
     </form>
   );
 };
